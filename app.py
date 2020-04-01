@@ -5,13 +5,15 @@ from PySide2.QtWidgets import (
     QWidget,
     QTableWidgetItem,
     QFileDialog,
-    QAction
+    QAction,
 )
 from PySide2.QtCore import Qt
 from PySide2.QtGui import qApp
+from openpyxl import load_workbook
 
+from utils import get_logger
 from resources.pembelian_ui import Ui_pembelian
-from excel_functions import write_to_excel
+from excel_functions import write_to_excel, calc_totals
 import constants
 
 
@@ -21,6 +23,8 @@ class PembelianWidget(QWidget):
         self.ui = Ui_pembelian()
         self.ui.setupUi(self)
         self.ui.date_line.setText(constants.DATE)
+        self.logger = get_logger("excel_automator")
+        self.logger.info("Initializing program")
 
         # Context menu setup
         self.ui.commit_table.setContextMenuPolicy(Qt.ActionsContextMenu)
@@ -33,15 +37,23 @@ class PembelianWidget(QWidget):
         self.ui.confirm_button.setDisabled(True)
 
         # Hookup buttons
+        self.ui.test_button.clicked.connect(self.test_func)
+
         self.ui.add_vendor_button.clicked.connect(self.add_to_table)
         self.ui.file_browse_button.clicked.connect(self.get_excel_sheet)
         self.ui.confirm_button.clicked.connect(self.confirm_table)
+
+    def test_func(self):
+        wb = load_workbook("Pembelian 2020.xlsx")
+        avg = calc_totals(wb, "Telur", self.logger)
+        self.logger.debug(avg)
 
     def delete_table_row(self):
         current_row = self.ui.commit_table.currentRow()
         self.ui.commit_table.removeRow(current_row)
 
     def get_excel_sheet(self):
+        """Load Purchase Excelsheet and get vendors"""
         try:
             self.ui.xls_file_browser.setText(
                 QFileDialog.getOpenFileName(filter="Excel sheets (*.xlsx)")[0]
@@ -55,13 +67,17 @@ class PembelianWidget(QWidget):
             self.__set_info(f"Failed to pick sheet! Reason: {error}", "fail")
             return
 
+        purchase_book = load_workbook(self.ui.xls_file_browser.text())
+        for vendor in purchase_book.sheetnames:
+            self.ui.vendor_combo.addItem(vendor)
+
         self.ui.confirm_button.setDisabled(True)
 
         if self.ui.xls_file_browser.text():
             self.ui.confirm_button.setEnabled(True)
 
     def clear_inputs(self):
-        self.ui.vendor_line.clear()
+        self.ui.vendor_combo.clear()
         self.ui.item_line.clear()
         self.ui.qty_spin.clear()
         self.ui.unit_line.clear()
@@ -71,19 +87,20 @@ class PembelianWidget(QWidget):
 
     def add_to_table(self):
         # TODO: Refactor this to be dynamic
+
         # Commit input to table
         row_count = self.ui.commit_table.rowCount()
         self.ui.commit_table.insertRow(row_count)
         new_row = row_count
 
-        total_cost = self.ui.qty_spin.value() * self.ui.qty_spin.value()
+        total_cost = self.ui.qty_spin.value() * self.ui.harga_spin.value()
         unit_cost = total_cost / self.ui.isi_spin.value()
 
         date_data = QTableWidgetItem(self.ui.date_line.text())
-        date_data.setData(Qt.UserRole, self.ui.date_line.text())
+        date_data.setData(Qt.UserRole, constants.DATE_STRP)
 
-        vendor_data = QTableWidgetItem(self.ui.vendor_line.text())
-        vendor_data.setData(Qt.UserRole, self.ui.vendor_line.text())
+        vendor_data = QTableWidgetItem(self.ui.vendor_combo.currentText())
+        vendor_data.setData(Qt.UserRole, self.ui.vendor_combo.currentText())
 
         item_data = QTableWidgetItem(self.ui.item_line.text())
         item_data.setData(Qt.UserRole, self.ui.item_line.text())
@@ -106,6 +123,9 @@ class PembelianWidget(QWidget):
         unit_harga_data = QTableWidgetItem(str(unit_cost))
         unit_harga_data.setData(Qt.UserRole, unit_cost)
 
+        category_data = QTableWidgetItem(self.ui.category_combo.currentText())
+        category_data.setData(Qt.UserRole, self.ui.category_combo.currentText())
+
         details = (
             date_data,
             vendor_data,
@@ -116,12 +136,14 @@ class PembelianWidget(QWidget):
             total_data,
             isi_data,
             unit_harga_data,
+            category_data
         )
 
         for column, item in enumerate(details):
             self.ui.commit_table.setItem(new_row, column, item)
 
     def confirm_table(self):
+        self.logger.info("Executing table")
         file = self.ui.xls_file_browser.text()
         try:
             for row in range(self.ui.commit_table.rowCount()):
@@ -133,15 +155,16 @@ class PembelianWidget(QWidget):
                 unit = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
                 harga = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
                 isi = self.ui.commit_table.item(row, 7).data(Qt.UserRole)
+                category = self.ui.commit_table.item(row, 9).data(Qt.UserRole)
 
                 # Execute table to excel
                 write_to_excel(date, file, vendor, item, quantity, unit,
-                               harga, isi)
+                               harga, isi, category, self.logger)
 
                 self.__set_info("Writing to Excel sheet...")
         except Exception as error:
             self.__set_info(f"Failed writing to excel sheet! Reason: {error}", "fail")
-            print(error)
+            self.logger.error(f"Error: {error}")
             return
         self.clean_table()
 
