@@ -9,7 +9,7 @@ from openpyxl.styles import numbers
 # Today as 30-Mar-19
 DATE_FORMAT = "dd-mmm-yy"
 
-
+COMMA_FORMAT = "#,##0"
 RP_FORMAT = u'_("Rp"* #,##0_);_("Rp"* (#,##0);_("Rp"* "-"_);_(@_)'
 
 
@@ -67,6 +67,9 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
 
     total_cell = vendor_sheet.cell(last_row, 6)
     total_cell.number_format = RP_FORMAT
+
+    isi_cell = vendor_sheet.cell(last_row, 7)
+    isi_cell.number_format = COMMA_FORMAT
 
     per_unit_cell = vendor_sheet.cell(last_row, 8)
     per_unit_cell.number_format = RP_FORMAT
