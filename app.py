@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 
 from PySide2.QtWidgets import (
     QApplication,
@@ -13,7 +14,7 @@ from openpyxl import load_workbook
 
 from utils import get_logger
 from resources.pembelian_ui import Ui_pembelian
-from excel_functions import write_to_excel, calc_totals
+from excel_functions import write_to_excel
 import constants
 
 
@@ -44,9 +45,7 @@ class PembelianWidget(QWidget):
         self.ui.confirm_button.clicked.connect(self.confirm_table)
 
     def test_func(self):
-        wb = load_workbook("Pembelian 2020.xlsx")
-        avg = calc_totals(wb, "Telur", self.logger)
-        self.logger.debug(avg)
+        pass
 
     def delete_table_row(self):
         current_row = self.ui.commit_table.currentRow()
@@ -59,12 +58,12 @@ class PembelianWidget(QWidget):
                 QFileDialog.getOpenFileName(filter="Excel sheets (*.xlsx)")[0]
             )
         except KeyError as error:
-            self.__set_info(f"Failed to pick sheet! Vendor doesn't exist.",
-                            "fail")
-            print(error)
+            self.__set_info(f"Failed to pick sheet! Vendor doesn't exist.", "fail")
+            self.logger.error(error)
             return
         except Exception as error:
             self.__set_info(f"Failed to pick sheet! Reason: {error}", "fail")
+            self.logger.error(error)
             return
 
         purchase_book = load_workbook(self.ui.xls_file_browser.text())
@@ -86,7 +85,15 @@ class PembelianWidget(QWidget):
         self.__set_info("Cleared inputs!", status="done")
 
     def add_to_table(self):
-        # TODO: Refactor this to be dynamic
+        if (
+            self.ui.harga_spin.value() == 0
+            or self.ui.isi_spin.value() == 0
+            or self.ui.qty_spin.value() == 0
+        ):
+            self.__set_info("Values cannot be 0!", "fail")
+
+        date_text = self.ui.date_line.text()
+        date = datetime.strptime(date_text, "%d-%b-%y")
 
         # Commit input to table
         row_count = self.ui.commit_table.rowCount()
@@ -97,7 +104,7 @@ class PembelianWidget(QWidget):
         unit_cost = total_cost / self.ui.isi_spin.value()
 
         date_data = QTableWidgetItem(self.ui.date_line.text())
-        date_data.setData(Qt.UserRole, constants.DATE_STRP)
+        date_data.setData(Qt.UserRole, date)
 
         vendor_data = QTableWidgetItem(self.ui.vendor_combo.currentText())
         vendor_data.setData(Qt.UserRole, self.ui.vendor_combo.currentText())
@@ -128,15 +135,15 @@ class PembelianWidget(QWidget):
 
         details = (
             date_data,
-            vendor_data,
             item_data,
+            vendor_data,
             qty_data,
             unit_data,
             harga_data,
             total_data,
             isi_data,
             unit_harga_data,
-            category_data
+            category_data,
         )
 
         for column, item in enumerate(details):
@@ -145,21 +152,38 @@ class PembelianWidget(QWidget):
     def confirm_table(self):
         self.logger.info("Executing table")
         file = self.ui.xls_file_browser.text()
+        if self.ui.commit_table.rowCount() == 0:
+            self.__set_info("Nothing to write")
+            return
         try:
             for row in range(self.ui.commit_table.rowCount()):
                 # Get values from item ranges
                 date = self.ui.commit_table.item(row, 0).data(Qt.UserRole)
-                vendor = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
-                item = self.ui.commit_table.item(row, 2).data(Qt.UserRole)
+                item = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
+                vendor = self.ui.commit_table.item(row, 2).data(Qt.UserRole)
                 quantity = self.ui.commit_table.item(row, 3).data(Qt.UserRole)
                 unit = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
                 harga = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
                 isi = self.ui.commit_table.item(row, 7).data(Qt.UserRole)
                 category = self.ui.commit_table.item(row, 9).data(Qt.UserRole)
 
+                if not item:
+                    self.__set_info("item is empty")
+                    return
+
                 # Execute table to excel
-                write_to_excel(date, file, vendor, item, quantity, unit,
-                               harga, isi, category, self.logger)
+                write_to_excel(
+                    date,
+                    file,
+                    vendor,
+                    item,
+                    quantity,
+                    unit,
+                    harga,
+                    isi,
+                    category,
+                    self.logger,
+                )
 
                 self.__set_info("Writing to Excel sheet...")
         except Exception as error:

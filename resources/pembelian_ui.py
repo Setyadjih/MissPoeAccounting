@@ -103,12 +103,13 @@ class Ui_pembelian(object):
 
         self.horizontalLayout_7 = QHBoxLayout()
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
-        self.qty_spin = QSpinBox(self.frame)
+        self.qty_spin = QDoubleSpinBox(self.frame)
         self.qty_spin.setObjectName(u"qty_spin")
         self.qty_spin.setMinimumSize(QSize(50, 0))
         self.qty_spin.setMaximumSize(QSize(100, 16777215))
         self.qty_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.qty_spin.setMinimum(0)
+        self.qty_spin.setMaximum(9999999.000000000000000)
+        self.qty_spin.setValue(1.000000000000000)
 
         self.horizontalLayout_7.addWidget(self.qty_spin)
 
@@ -132,26 +133,30 @@ class Ui_pembelian(object):
 
         self.input_layout.addLayout(self.horizontalLayout_7)
 
-        self.harga_spin = QSpinBox(self.frame)
+        self.harga_spin = QDoubleSpinBox(self.frame)
         self.harga_spin.setObjectName(u"harga_spin")
+        self.harga_spin.setMinimumSize(QSize(63, 0))
         self.harga_spin.setMaximumSize(QSize(50, 16777215))
         self.harga_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.harga_spin.setMinimum(0)
-        self.harga_spin.setMaximum(999999999)
-        self.harga_spin.setValue(1)
+        self.harga_spin.setProperty("showGroupSeparator", True)
+        self.harga_spin.setMaximum(999999999999.000000000000000)
+        self.harga_spin.setValue(20000.000000000000000)
 
         self.input_layout.addWidget(self.harga_spin)
 
-        self.isi_spin = QSpinBox(self.frame)
+        self.isi_spin = QDoubleSpinBox(self.frame)
         self.isi_spin.setObjectName(u"isi_spin")
+        self.isi_spin.setMinimumSize(QSize(63, 0))
         self.isi_spin.setMaximumSize(QSize(50, 16777215))
         self.isi_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.isi_spin.setMinimum(1)
-        self.isi_spin.setMaximum(999999999)
+        self.isi_spin.setMaximum(9999999999999.000000000000000)
+        self.isi_spin.setValue(1.000000000000000)
 
         self.input_layout.addWidget(self.isi_spin)
 
         self.category_combo = QComboBox(self.frame)
+        self.category_combo.addItem("")
+        self.category_combo.addItem("")
         self.category_combo.addItem("")
         self.category_combo.addItem("")
         self.category_combo.addItem("")
@@ -325,6 +330,8 @@ class Ui_pembelian(object):
         self.category_combo.setItemText(0, QCoreApplication.translate("pembelian", u"Fresh", None))
         self.category_combo.setItemText(1, QCoreApplication.translate("pembelian", u"Sundries", None))
         self.category_combo.setItemText(2, QCoreApplication.translate("pembelian", u"Packaging", None))
+        self.category_combo.setItemText(3, QCoreApplication.translate("pembelian", u"Utensils", None))
+        self.category_combo.setItemText(4, QCoreApplication.translate("pembelian", u"Appliances", None))
 
         self.add_vendor_button.setText(QCoreApplication.translate("pembelian", u"Add", None))
         ___qtablewidgetitem = self.commit_table.horizontalHeaderItem(0)

@@ -152,6 +152,9 @@
                     <property name="maximum">
                      <double>9999999.000000000000000</double>
                     </property>
+                    <property name="value">
+                     <double>1.000000000000000</double>
+                    </property>
                    </widget>
                   </item>
                   <item>
@@ -203,6 +206,12 @@
                 </item>
                 <item>
                  <widget class="QDoubleSpinBox" name="harga_spin">
+                  <property name="minimumSize">
+                   <size>
+                    <width>63</width>
+                    <height>0</height>
+                   </size>
+                  </property>
                   <property name="maximumSize">
                    <size>
                     <width>50</width>
@@ -212,13 +221,25 @@
                   <property name="buttonSymbols">
                    <enum>QAbstractSpinBox::NoButtons</enum>
                   </property>
+                  <property name="showGroupSeparator" stdset="0">
+                   <bool>true</bool>
+                  </property>
                   <property name="maximum">
                    <double>999999999999.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>20000.000000000000000</double>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QDoubleSpinBox" name="isi_spin">
+                  <property name="minimumSize">
+                   <size>
+                    <width>63</width>
+                    <height>0</height>
+                   </size>
+                  </property>
                   <property name="maximumSize">
                    <size>
                     <width>50</width>
@@ -230,6 +251,9 @@
                   </property>
                   <property name="maximum">
                    <double>9999999999999.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>1.000000000000000</double>
                   </property>
                  </widget>
                 </item>
@@ -254,6 +278,16 @@
                   <item>
                    <property name="text">
                     <string>Packaging</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Utensils</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Appliances</string>
                    </property>
                   </item>
                  </widget>
