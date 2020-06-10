@@ -9,11 +9,10 @@ from PySide2.QtWidgets import (
     QAction,
 )
 from PySide2.QtCore import Qt
-from PySide2.QtGui import qApp
 from openpyxl import load_workbook
 
 from utils import get_logger
-from resources.pembelian_ui import Ui_pembelian
+from resources.pembelian_ui_ss import Ui_pembelian
 from excel_functions import write_to_excel
 import constants
 
@@ -44,8 +43,15 @@ class PembelianWidget(QWidget):
         self.ui.file_browse_button.clicked.connect(self.get_excel_sheet)
         self.ui.confirm_button.clicked.connect(self.confirm_table)
 
+        # # FIXME:
+        # # TESTING PARAMS
+        # self.ui.xls_file_browser.setText("D:\Miss Poe\Costings\_data\Pembelian 2020 TESTING.xlsx")
+        # self.ui.confirm_button.setEnabled(True)
+
     def test_func(self):
-        pass
+        purchase_book = load_workbook(self.ui.xls_file_browser.text())
+        for vendor in purchase_book.sheetnames:
+            self.ui.vendor_combo.addItem(vendor)
 
     def delete_table_row(self):
         current_row = self.ui.commit_table.currentRow()
@@ -66,6 +72,8 @@ class PembelianWidget(QWidget):
             self.logger.error(error)
             return
 
+        if not self.ui.xls_file_browser.text():
+            return
         purchase_book = load_workbook(self.ui.xls_file_browser.text())
         for vendor in purchase_book.sheetnames:
             self.ui.vendor_combo.addItem(vendor)
@@ -82,6 +90,7 @@ class PembelianWidget(QWidget):
         self.ui.unit_line.clear()
         self.ui.harga_spin.clear()
         self.ui.isi_spin.clear()
+        self.ui.isi_unit_line.clear()
         self.__set_info("Cleared inputs!", status="done")
 
     def add_to_table(self):
@@ -127,6 +136,9 @@ class PembelianWidget(QWidget):
         isi_data = QTableWidgetItem(self.ui.isi_spin.text())
         isi_data.setData(Qt.UserRole, self.ui.isi_spin.value())
 
+        isi_unit_data = QTableWidgetItem(self.ui.isi_unit_line.text())
+        isi_unit_data.setData(Qt.UserRole, self.ui.isi_unit_line.text())
+
         unit_harga_data = QTableWidgetItem(str(unit_cost))
         unit_harga_data.setData(Qt.UserRole, unit_cost)
 
@@ -142,6 +154,7 @@ class PembelianWidget(QWidget):
             harga_data,
             total_data,
             isi_data,
+            isi_unit_data,
             unit_harga_data,
             category_data,
         )
@@ -165,7 +178,8 @@ class PembelianWidget(QWidget):
                 unit = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
                 harga = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
                 isi = self.ui.commit_table.item(row, 7).data(Qt.UserRole)
-                category = self.ui.commit_table.item(row, 9).data(Qt.UserRole)
+                isi_unit = self.ui.commit_table.item(row, 8).data(Qt.UserRole)
+                category = self.ui.commit_table.item(row, 10).data(Qt.UserRole)
 
                 if not item:
                     self.__set_info("item is empty")
@@ -181,6 +195,7 @@ class PembelianWidget(QWidget):
                     unit,
                     harga,
                     isi,
+                    isi_unit,
                     category,
                     self.logger,
                 )

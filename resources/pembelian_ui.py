@@ -3,22 +3,22 @@
 ################################################################################
 ## Form generated from reading UI file 'Poe_Excel_automator.ui'
 ##
-## Created by: Qt User Interface Compiler version 5.14.1
+## Created by: Qt User Interface Compiler version 5.14.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide2.QtCore import (QCoreApplication, QMetaObject, QObject, QPoint,
-    QRect, QSize, QUrl, Qt)
+from PySide2.QtCore import (QCoreApplication, QDate, QDateTime, QMetaObject,
+    QObject, QPoint, QRect, QSize, QTime, QUrl, Qt)
 from PySide2.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
-    QFontDatabase, QIcon, QLinearGradient, QPalette, QPainter, QPixmap,
-    QRadialGradient)
+    QFontDatabase, QIcon, QKeySequence, QLinearGradient, QPalette, QPainter,
+    QPixmap, QRadialGradient)
 from PySide2.QtWidgets import *
 
 
 class Ui_pembelian(object):
     def setupUi(self, pembelian):
-        if pembelian.objectName():
+        if not pembelian.objectName():
             pembelian.setObjectName(u"pembelian")
         pembelian.resize(1236, 421)
         self.verticalLayout_6 = QVBoxLayout(pembelian)
@@ -144,15 +144,35 @@ class Ui_pembelian(object):
 
         self.input_layout.addWidget(self.harga_spin)
 
+        self.horizontalLayout_8 = QHBoxLayout()
+        self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.isi_spin = QDoubleSpinBox(self.frame)
         self.isi_spin.setObjectName(u"isi_spin")
         self.isi_spin.setMinimumSize(QSize(63, 0))
         self.isi_spin.setMaximumSize(QSize(50, 16777215))
         self.isi_spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.isi_spin.setMaximum(9999999999999.000000000000000)
-        self.isi_spin.setValue(1.000000000000000)
+        self.isi_spin.setValue(1000.000000000000000)
 
-        self.input_layout.addWidget(self.isi_spin)
+        self.horizontalLayout_8.addWidget(self.isi_spin)
+
+        self.isi_unit_label = QLabel(self.frame)
+        self.isi_unit_label.setObjectName(u"isi_unit_label")
+
+        self.horizontalLayout_8.addWidget(self.isi_unit_label)
+
+        self.isi_unit_line = QLineEdit(self.frame)
+        self.isi_unit_line.setObjectName(u"isi_unit_line")
+        self.isi_unit_line.setMaximumSize(QSize(82, 16777215))
+
+        self.horizontalLayout_8.addWidget(self.isi_unit_line)
+
+        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_8.addItem(self.horizontalSpacer_3)
+
+
+        self.input_layout.addLayout(self.horizontalLayout_8)
 
         self.category_combo = QComboBox(self.frame)
         self.category_combo.addItem("")
@@ -209,8 +229,8 @@ class Ui_pembelian(object):
         self.verticalLayout_3.setSpacing(0)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.commit_table = QTableWidget(pembelian)
-        if (self.commit_table.columnCount() < 10):
-            self.commit_table.setColumnCount(10)
+        if (self.commit_table.columnCount() < 11):
+            self.commit_table.setColumnCount(11)
         __qtablewidgetitem = QTableWidgetItem()
         self.commit_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
         __qtablewidgetitem1 = QTableWidgetItem()
@@ -231,6 +251,8 @@ class Ui_pembelian(object):
         self.commit_table.setHorizontalHeaderItem(8, __qtablewidgetitem8)
         __qtablewidgetitem9 = QTableWidgetItem()
         self.commit_table.setHorizontalHeaderItem(9, __qtablewidgetitem9)
+        __qtablewidgetitem10 = QTableWidgetItem()
+        self.commit_table.setHorizontalHeaderItem(10, __qtablewidgetitem10)
         self.commit_table.setObjectName(u"commit_table")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -327,6 +349,8 @@ class Ui_pembelian(object):
         self.label_2.setText(QCoreApplication.translate("pembelian", u"Category", None))
         self.unit_label.setText(QCoreApplication.translate("pembelian", u"Unit", None))
         self.unit_line.setText(QCoreApplication.translate("pembelian", u"kg", None))
+        self.isi_unit_label.setText(QCoreApplication.translate("pembelian", u"Unit", None))
+        self.isi_unit_line.setText(QCoreApplication.translate("pembelian", u"g", None))
         self.category_combo.setItemText(0, QCoreApplication.translate("pembelian", u"Fresh", None))
         self.category_combo.setItemText(1, QCoreApplication.translate("pembelian", u"Sundries", None))
         self.category_combo.setItemText(2, QCoreApplication.translate("pembelian", u"Packaging", None))
@@ -351,9 +375,11 @@ class Ui_pembelian(object):
         ___qtablewidgetitem7 = self.commit_table.horizontalHeaderItem(7)
         ___qtablewidgetitem7.setText(QCoreApplication.translate("pembelian", u"Isi", None));
         ___qtablewidgetitem8 = self.commit_table.horizontalHeaderItem(8)
-        ___qtablewidgetitem8.setText(QCoreApplication.translate("pembelian", u"Harga/Unit", None));
+        ___qtablewidgetitem8.setText(QCoreApplication.translate("pembelian", u"Isi Unit", None));
         ___qtablewidgetitem9 = self.commit_table.horizontalHeaderItem(9)
-        ___qtablewidgetitem9.setText(QCoreApplication.translate("pembelian", u"Category", None));
+        ___qtablewidgetitem9.setText(QCoreApplication.translate("pembelian", u"Harga/Unit", None));
+        ___qtablewidgetitem10 = self.commit_table.horizontalHeaderItem(10)
+        ___qtablewidgetitem10.setText(QCoreApplication.translate("pembelian", u"Category", None));
         self.test_button.setText(QCoreApplication.translate("pembelian", u"TEST", None))
         self.confirm_button.setText(QCoreApplication.translate("pembelian", u"Confirm", None))
         self.file_select_label.setText(QCoreApplication.translate("pembelian", u"Excel file:", None))

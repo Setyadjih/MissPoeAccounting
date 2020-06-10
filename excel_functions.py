@@ -15,7 +15,7 @@ RP_FORMAT = u'_("Rp"* #,##0_);_("Rp"* (#,##0);_("Rp"* "-"_);_(@_)'
 
 
 def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
-                   category, logger=None):
+                   isi_unit, category, logger=None):
     """
     Write the given data to the purchasing excel sheet
 
@@ -27,6 +27,7 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
     :param unit: unit for item quantity
     :param cost: Cost of purchase
     :param isi: how many units per item purchase
+    :param isi_unit: unit for isi
     :param category: category of purchase
     :param logger: logger pass through
     """
@@ -34,7 +35,7 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
     # Load excel file path
     # Due to openpyxl's structure, we need the data_only=False wb to save
     # formula
-    input_wb = openpyxl.load_workbook(file)
+    input_wb = openpyxl.load_workbook(file, data_only=False)
 
     # Create vendor sheet if new
     input_vendor = input_wb[vendor]
@@ -56,8 +57,9 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
     input_vendor[f"E{last_row}"] = cost
     input_vendor[f"F{last_row}"] = f'=C{last_row}*E{last_row}'
     input_vendor[f"G{last_row}"] = isi
-    input_vendor[f"H{last_row}"] = f"=F{last_row}/G{last_row}"
-    input_vendor[f"I{last_row}"] = category
+    input_vendor[f"H{last_row}"] = isi_unit
+    input_vendor[f"I{last_row}"] = f"=F{last_row}/G{last_row}"
+    input_vendor[f"J{last_row}"] = category
 
     # format cells for Rupiah
     logger.debug("Assigning format strings")
@@ -77,25 +79,24 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
     per_unit_cell.number_format = RP_FORMAT
 
     # Append to costing according to category
+    logger.debug("Assigning to ")
     try:
         cat_sheet = input_wb[category]
     except KeyError:
         input_wb.create_sheet(category)
         cat_sheet: Worksheet = input_wb[category]
-        cat_sheet['B1'] = category.upper()
+        cat_sheet['A1'] = category.upper()
+        cat_sheet['B1'] = 'Last Purchase'
+        cat_sheet.merge_cells('B1:C1')
         cat_sheet['B1'].font = Font(bold=True)
-        cat_sheet['E1'] = 'Mov Avg'
-        cat_sheet['F1'] = 'COGS (+20%)'
-        cat_sheet['F1'].alignment = Alignment(horizontal='center')
-        cat_sheet.merge_cells('F1:G1')
+        cat_sheet['E1'] = 'Avg/Isi'
 
         cat_sheet['A2'] = 'DATE'
         cat_sheet['B2'] = 'MATERIAL'
         cat_sheet['C2'] = 'WEIGHT'
         cat_sheet['D2'] = 'UNIT'
         cat_sheet['E2'] = 'PRICE'
-        cat_sheet['F2'] = 'PRICE(Rp)'
-        cat_sheet['G2'] = 'PRICE(unit)'
+
         cat_sheet['H2'] = 'PRICE DIF'
         cat_sheet['I2'] = 'PRICE DIF(%)'
         cat_sheet['J2'] = 'OLD PRICE'
@@ -108,8 +109,9 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
     input_wb.save(file)
 
     # average = "=SUM(VENDOR!A1+VENDOR!B3....)/(number of vendors)
+    # This workbook is to parse data from formulas (SEPERATE FROM INPUT WB)
     purchase_wb = openpyxl.load_workbook(file, data_only=True)
-    average, current_qty = calc_totals(purchase_wb, item, logger)
+    average = calc_totals(purchase_wb, item, logger)
     cs = cat_sheet.iter_rows(min_row=3, min_col=2, max_col=2, values_only=True)
 
     # check if item already in sheet
@@ -139,12 +141,10 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
         date_cell = f"A{row_num}"
         qty_cell = f"C{row_num}"
         price_cell = f"E{row_num}"
-        cogs_cell = f"F{row_num}"
 
         cat_sheet[date_cell] = date
-        cat_sheet[qty_cell] = current_qty
+        cat_sheet[qty_cell] = quantity
         cat_sheet[price_cell] = average
-        cat_sheet[cogs_cell] = f"=E{row_num}*1.2"
 
     if not item_exist:
         logger.info("Item is new, creating CAT entry")
@@ -155,7 +155,6 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
                 'C': quantity,
                 'D': unit,
                 'E': average,
-                'F': f"=E{row_num}*1.2"
             }
         )
 
@@ -181,6 +180,7 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
 
     input_wb.save(filename=file)
     input_wb.close()
+    logger.info("Finished writing to workbook...")
 
 
 def calc_totals(workbook: Workbook, item_name: str, logger=None):
@@ -194,14 +194,12 @@ def calc_totals(workbook: Workbook, item_name: str, logger=None):
     logger = logger if logger else getLogger()
     logger.info("Calculating totals...")
     row_count = 2
-    qty_count = 0
-
     calc_sheets = ['Fresh', 'Sundries', 'Packaging', 'Appliance', 'Utensils']
 
     # Iterating through each worksheet to find all entries of item
     logger.debug(f"Beginning iteration")
-    entry_count = 0
-    avg_formula = "=SUM("
+    qty_count = "SUM("
+    price_count = "SUM("
     try:
         for vendor in workbook.sheetnames:
             ws = workbook[vendor]
@@ -210,23 +208,51 @@ def calc_totals(workbook: Workbook, item_name: str, logger=None):
             for row in ws.iter_rows(min_row=3, values_only=True):
                 row_count += 1
                 if row[1] == item_name:
-                    entry_count += 1
                     logger.debug(f"Found entry in {ws.title}")
-                    price_cell = ws.cell(row_count, column=5).coordinate
 
+                    # Quantity and unit check
+                    qty_cell = ws.cell(row_count, column=7).coordinate
+                    unit_cell = ws.cell(row_count, column=8).coordinate
+
+                    # set defaults for isi
+                    if not ws[unit_cell].value or ws[qty_cell].value:
+                        ws[qty_cell] = 0
+
+                        ws[unit_cell] = "g"
+
+                    quantity = ws[qty_cell].value
+                    unit = ws[unit_cell].value
+
+                    # unit modification
+                    if unit.lower() == "kg":
+                        unit = "g"
+                        quantity *= 1000
+
+                    if unit.lower() == "l":
+                        unit = "ml"
+                        quantity *= 1000
+
+                    ws[unit_cell] = unit
+                    ws[qty_cell] = quantity
+
+                    qty_count += f"+'{ws.title}'!{qty_cell}"
+
+                    price_cell = ws.cell(row_count, column=5).coordinate
                     logger.debug(f"Price cell: {price_cell}")
 
-                    avg_formula += f"+'{ws.title}'!{price_cell}"
+                    price_count += f"+'{ws.title}'!{price_cell}"
 
-                    qty_count += row[2]
             # reset row count for next ws
             row_count = 2
 
-        avg_formula += f')/{entry_count}'
-        # average = price_count/qty_count
-        logger.info(f"returning {avg_formula, qty_count}")
+        # Close SUM brackets
+        qty_count += ")"
+        price_count += ")"
 
-        return avg_formula, qty_count
+        avg_formula = f'={price_count}/{qty_count}'
+        logger.info(f"returning {avg_formula}")
+
+        return avg_formula
     except Exception as e:
         logger.error(f"ERROR: {e}")
 
