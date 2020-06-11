@@ -7,8 +7,9 @@ from PySide2.QtWidgets import (
     QTableWidgetItem,
     QFileDialog,
     QAction,
+    QGraphicsOpacityEffect
 )
-from PySide2.QtCore import Qt
+from PySide2.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect
 from openpyxl import load_workbook
 
 from utils import get_logger
@@ -36,6 +37,9 @@ class PembelianWidget(QWidget):
         self.ui.status_bar.setText("Ready for input.")
         self.ui.confirm_button.setDisabled(True)
 
+        # Default test button to hide
+        self.ui.test_button.hide()
+
         # Hookup buttons
         self.ui.test_button.clicked.connect(self.test_func)
 
@@ -47,6 +51,7 @@ class PembelianWidget(QWidget):
         # # TESTING PARAMS
         # self.ui.xls_file_browser.setText("D:\Miss Poe\Costings\_data\Pembelian 2020 TESTING.xlsx")
         # self.ui.confirm_button.setEnabled(True)
+        # self.ui.test_button.show()
 
     def test_func(self):
         purchase_book = load_workbook(self.ui.xls_file_browser.text())

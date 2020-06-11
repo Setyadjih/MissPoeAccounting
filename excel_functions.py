@@ -79,7 +79,7 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
     per_unit_cell.number_format = RP_FORMAT
 
     # Append to costing according to category
-    logger.debug("Assigning to ")
+    logger.debug(f"Assigning to {category}")
     try:
         cat_sheet = input_wb[category]
     except KeyError:
@@ -89,17 +89,10 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
         cat_sheet['B1'] = 'Last Purchase'
         cat_sheet.merge_cells('B1:C1')
         cat_sheet['B1'].font = Font(bold=True)
-        cat_sheet['E1'] = 'Avg/Isi'
 
-        cat_sheet['A2'] = 'DATE'
         cat_sheet['B2'] = 'MATERIAL'
-        cat_sheet['C2'] = 'WEIGHT'
         cat_sheet['D2'] = 'UNIT'
         cat_sheet['E2'] = 'PRICE'
-
-        cat_sheet['H2'] = 'PRICE DIF'
-        cat_sheet['I2'] = 'PRICE DIF(%)'
-        cat_sheet['J2'] = 'OLD PRICE'
 
         # Apply style to docs
         for i in range(1, 11):
@@ -112,13 +105,14 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
     # This workbook is to parse data from formulas (SEPERATE FROM INPUT WB)
     purchase_wb = openpyxl.load_workbook(file, data_only=True)
     average = calc_totals(purchase_wb, item, logger)
-    cs = cat_sheet.iter_rows(min_row=3, min_col=2, max_col=2, values_only=True)
+    cs = cat_sheet.iter_rows(min_row=3, min_col=1, max_col=1, values_only=True)
 
     # check if item already in sheet
-    # Row num at two due to Excel sheet format
+    # Row num at three due to Excel sheet format
     item_exist = False
     row_num = 3
 
+    # Check for item
     for row in cs:
         item_name = row[0]
         if item == item_name:
@@ -127,60 +121,29 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
         row_num += 1
 
     if item_exist:
-        # Store old price data
-        read_cat = purchase_wb[category]
-        old_price = read_cat[f"E{row_num}"].value
-        cat_sheet[f"J{row_num}"] = old_price
-
-        # Show change in price
-        cat_sheet[f"H{row_num}"] = f"=E{row_num}-J{row_num}"
-        cat_sheet[f"I{row_num}"] = f"=H{row_num}/J{row_num}"
-
         # update cell data
         logger.info("Updating CAT entry")
-        date_cell = f"A{row_num}"
-        qty_cell = f"C{row_num}"
-        price_cell = f"E{row_num}"
-
-        cat_sheet[date_cell] = date
-        cat_sheet[qty_cell] = quantity
+        price_cell = f"C{row_num}"
         cat_sheet[price_cell] = average
 
     if not item_exist:
         logger.info("Item is new, creating CAT entry")
         cat_sheet.append(
             {
-                'A': date,
-                'B': item,
-                'C': quantity,
-                'D': unit,
-                'E': average,
+                'A': item,
+                'B': isi_unit,
+                'C': average,
             }
         )
 
-    date_cell_obj = cat_sheet.cell(row_num, column=1)
-    date_cell_obj.number_format = DATE_FORMAT
-
-    price_cell_obj = cat_sheet.cell(row=row_num, column=5)
+    price_cell_obj = cat_sheet.cell(row=row_num, column=3)
     price_cell_obj.number_format = RP_FORMAT
-
-    cogs_cell_obj = cat_sheet.cell(row_num, 6)
-    cogs_cell_obj.number_format = RP_FORMAT
-
-    price_dif_obj = cat_sheet.cell(row_num, 8)
-    price_dif_obj.number_format = RP_FORMAT
-
-    dif_pct_obj = cat_sheet.cell(row_num, 9)
-    dif_pct_obj.number_format = numbers.FORMAT_PERCENTAGE
-
-    old_price_obj = cat_sheet.cell(row_num, 10)
-    old_price_obj.number_format = RP_FORMAT
 
     purchase_wb.close()
 
     input_wb.save(filename=file)
     input_wb.close()
-    logger.info("Finished writing to workbook...")
+    logger.info("Finished writing to workbook")
 
 
 def calc_totals(workbook: Workbook, item_name: str, logger=None):
