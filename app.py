@@ -7,14 +7,13 @@ from PySide2.QtWidgets import (
     QTableWidgetItem,
     QFileDialog,
     QAction,
-    QGraphicsOpacityEffect
 )
-from PySide2.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect
+from PySide2.QtCore import Qt
 from openpyxl import load_workbook
 
 from utils import get_logger
 from resources.pembelian_ui_ss import Ui_pembelian
-from excel_functions import write_to_excel
+from excel_functions import write_to_excel, init_catsheet
 import constants
 
 
@@ -36,6 +35,7 @@ class PembelianWidget(QWidget):
         self.setWindowTitle(f"Poe Excel Automator {constants.APP_VERSION}")
         self.ui.status_bar.setText("Ready for input.")
         self.ui.confirm_button.setDisabled(True)
+        self.ui.init_button.setDisabled(True)
 
         # Default test button to hide
         self.ui.test_button.hide()
@@ -46,17 +46,32 @@ class PembelianWidget(QWidget):
         self.ui.add_vendor_button.clicked.connect(self.add_to_table)
         self.ui.file_browse_button.clicked.connect(self.get_excel_sheet)
         self.ui.confirm_button.clicked.connect(self.confirm_table)
+        self.ui.init_button.clicked.connect(self.init_cat_button)
 
         # # FIXME:
-        # # TESTING PARAMS
-        # self.ui.xls_file_browser.setText("D:\Miss Poe\Costings\_data\Pembelian 2020 TESTING.xlsx")
-        # self.ui.confirm_button.setEnabled(True)
-        # self.ui.test_button.show()
+        # TESTING PARAMS
+        self.ui.xls_file_browser.setText("D:\Miss "
+                                         "Poe\Costings\_data\Pembelian 2020 "
+                                         "TESTING.xlsx")
+        self.ui.confirm_button.setEnabled(True)
+        self.ui.init_button.setEnabled(True)
+        self.ui.test_button.show()
 
     def test_func(self):
         purchase_book = load_workbook(self.ui.xls_file_browser.text())
         for vendor in purchase_book.sheetnames:
             self.ui.vendor_combo.addItem(vendor)
+
+    def init_cat_button(self):
+        file = self.ui.xls_file_browser.text()
+        self.__set_info("Working on data....")
+        try:
+            init_catsheet(file, self.logger)
+        except Exception as e:
+            self.logger.error(e)
+            self.__set_info("Failed to init data!", "fail")
+            return
+        self.__set_info("All done!", "done")
 
     def delete_table_row(self):
         current_row = self.ui.commit_table.currentRow()
@@ -84,9 +99,11 @@ class PembelianWidget(QWidget):
             self.ui.vendor_combo.addItem(vendor)
 
         self.ui.confirm_button.setDisabled(True)
+        self.ui.init_button.setDisabled(True)
 
         if self.ui.xls_file_browser.text():
             self.ui.confirm_button.setEnabled(True)
+            self.ui.init_button.setEnabled(True)
 
     def clear_inputs(self):
         self.ui.vendor_combo.clear()

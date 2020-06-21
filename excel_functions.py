@@ -14,6 +14,85 @@ COMMA_FORMAT = "#,##0"
 RP_FORMAT = u'_("Rp"* #,##0_);_("Rp"* (#,##0);_("Rp"* "-"_);_(@_)'
 
 
+def init_catsheet(file, logger):
+    logger = logger if logger else getLogger()
+    # Load excel file path
+    # Due to openpyxl's structure, we need the data_only=False wb to save
+    # formula
+    input_wb = openpyxl.load_workbook(file, data_only=False)
+
+    cat_sheets = ["LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging",
+                  "Utensils", "Appliance"]
+    done_list = ['None', '']
+
+    # Iterate over all vendor sheets
+    vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in cat_sheets]
+    for sheet_name in vendor_sheets:
+        sheet: Worksheet = input_wb[sheet_name]
+        logger.info(f"Sheet: {sheet}")
+
+        logger.info("Starting processing")
+        # Once the sheet is settled, start processing
+        for row in sheet.iter_rows(min_row=3, max_row=sheet.max_row, values_only=True):
+            item = row[1]
+            logger.debug(f"ROW: {row}")
+
+            # Early check done_list to skip checking in cat sheet
+            # For some reason == None works while  (not item) doesn't??
+            if item in done_list or item == None:
+                continue
+            logger.info(f"WORKING ON:\n{item}")
+
+            # Try to get data from row. If missing data, give defaults
+            try:
+                isi_unit = row[7]
+                if not isi_unit:
+                    isi_unit = row[3]
+
+                if type(isi_unit) != str or isi_unit == "kg":
+                    isi_unit = "g"
+
+                if isi_unit == "l":
+                    isi_unit = "ml"
+            except IndexError:
+                logger.error("Isi error, assigning g")
+                isi_unit = "g"
+
+            try:
+                corrections = {
+                    "Utensil": "Utensils",
+                    "Packing": "Packaging",
+                    "Sundry": "Sundries"
+                }
+                cat: str = row[9]
+                if not cat:
+                    logger.debug("Assigning to default")
+                    cat = "Fresh"
+                cat = cat.strip().lower().capitalize()
+                if cat in corrections.keys():
+                    cat = corrections[cat]
+
+            except IndexError:
+                logger.error("category error, assigning Fresh")
+                cat = "Fresh"
+            logger.debug(f"Category: {cat}")
+            cat_sheet = input_wb[cat]
+
+            # Check if item is already in cat sheet
+            for cat_row in cat_sheet.iter_rows(min_row=3, values_only=True):
+                cat_item = cat_row[0]
+                if cat_item == item:
+                    logger.info("Item already in category, skipping")
+                    continue
+
+            logger.info(f"Appending {item} to sheet")
+            update_cat(file, item, isi_unit, input_wb, cat, logger)
+
+            done_list.append(item)
+
+    logger.info("All done with init")
+
+
 def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
                    isi_unit, category, logger=None):
     """
@@ -78,33 +157,36 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
     per_unit_cell = input_vendor.cell(last_row, 8)
     per_unit_cell.number_format = RP_FORMAT
 
+    update_cat(file, item, isi_unit, input_wb, category, logger)
+
+
+def update_cat(file, item, isi_unit, input_wb, category, logger):
+
     # Append to costing according to category
-    logger.debug(f"Assigning to {category}")
     try:
         cat_sheet = input_wb[category]
     except KeyError:
+        logger.debug(f"{category} not found, creating")
         input_wb.create_sheet(category)
         cat_sheet: Worksheet = input_wb[category]
         cat_sheet['A1'] = category.upper()
-        cat_sheet['B1'] = 'Last Purchase'
-        cat_sheet.merge_cells('B1:C1')
-        cat_sheet['B1'].font = Font(bold=True)
 
-        cat_sheet['B2'] = 'MATERIAL'
-        cat_sheet['D2'] = 'UNIT'
-        cat_sheet['E2'] = 'PRICE'
+        cat_sheet['A2'] = 'MATERIAL'
+        cat_sheet['B2'] = 'UNIT'
+        cat_sheet['C2'] = 'PRICE'
 
         # Apply style to docs
-        for i in range(1, 11):
+        for i in range(1, 4):
             cell = cat_sheet.cell(row=2, column=i)
             cell.border = Border(bottom=Side(style='thick'))
 
     input_wb.save(file)
 
+    logger.debug(f"Assigning {item} to {category}")
     # average = "=SUM(VENDOR!A1+VENDOR!B3....)/(number of vendors)
     # This workbook is to parse data from formulas (SEPERATE FROM INPUT WB)
-    purchase_wb = openpyxl.load_workbook(file, data_only=True)
-    average = calc_totals(purchase_wb, item, logger)
+    value_wb = openpyxl.load_workbook(file, data_only=True)
+    average = calc_totals(value_wb, item, logger)
     cs = cat_sheet.iter_rows(min_row=3, min_col=1, max_col=1, values_only=True)
 
     # check if item already in sheet
@@ -139,7 +221,7 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
     price_cell_obj = cat_sheet.cell(row=row_num, column=3)
     price_cell_obj.number_format = RP_FORMAT
 
-    purchase_wb.close()
+    value_wb.close()
 
     input_wb.save(filename=file)
     input_wb.close()
@@ -185,6 +267,9 @@ def calc_totals(workbook: Workbook, item_name: str, logger=None):
 
                     quantity = ws[qty_cell].value
                     unit = ws[unit_cell].value
+
+                    if quantity == 0:
+                        ws[qty_cell] = 1
 
                     # unit modification
                     if unit.lower() == "kg":

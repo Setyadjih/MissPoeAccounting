@@ -7,7 +7,7 @@ import logging
 
 LOGGER_FORMAT = '%(asctime)s - ' \
                 '%(module)s.%(funcName)s - ' \
-                '(%(levelname)s): %(message)s'
+                '(%(levelname)s) - %(lineno)d: %(message)s'
 FORMATTER = logging.Formatter(LOGGER_FORMAT)
 
 
