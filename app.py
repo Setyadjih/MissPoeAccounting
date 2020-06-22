@@ -1,5 +1,7 @@
 import sys
 from datetime import datetime
+import shutil
+from pathlib import Path
 
 from PySide2.QtWidgets import (
     QApplication,
@@ -7,6 +9,7 @@ from PySide2.QtWidgets import (
     QTableWidgetItem,
     QFileDialog,
     QAction,
+    QMessageBox
 )
 from PySide2.QtCore import Qt
 from openpyxl import load_workbook
@@ -64,6 +67,26 @@ class PembelianWidget(QWidget):
 
     def init_cat_button(self):
         file = self.ui.xls_file_browser.text()
+
+        # Create a backup copy just in case
+        dest = Path(file).with_suffix(".bak")
+        shutil.copyfile(file, dest)
+
+        # Setting up warning box to be sure
+        warning = QMessageBox()
+        warning.setIcon(QMessageBox.Warning)
+        warning.setText("Initializing the category data can take a long "
+                        "time, are you sure you want to do this?")
+        warning.setWindowTitle("Are you sure?")
+
+        # I don't really understand the pipe operator, but it works
+        warning.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+
+        # result is an int, compare to qmessage status works
+        result = warning.exec_()
+        if result == QMessageBox.Cancel:
+            return
+
         self.__set_info("Working on data....")
         try:
             init_catsheet(file, self.logger)

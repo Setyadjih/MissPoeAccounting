@@ -1,4 +1,4 @@
 from datetime import date
 
-APP_VERSION = 'v0.1.7'
+APP_VERSION = 'v0.1.9'
 DATE = date.today().strftime("%d-%b-%y")

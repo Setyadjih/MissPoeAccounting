@@ -243,61 +243,34 @@ def calc_totals(workbook: Workbook, item_name: str, logger=None):
 
     # Iterating through each worksheet to find all entries of item
     logger.debug(f"Beginning iteration")
-    qty_count = "SUM("
     price_count = "SUM("
+    entry_count = 0
+
     try:
         for vendor in workbook.sheetnames:
             ws = workbook[vendor]
+
+            # Do not read from category sheets
             if ws.title in calc_sheets:
                 continue
+
             for row in ws.iter_rows(min_row=3, values_only=True):
                 row_count += 1
                 if row[1] == item_name:
                     logger.debug(f"Found entry in {ws.title}")
+                    entry_count += 1
 
-                    # Quantity and unit check
-                    qty_cell = ws.cell(row_count, column=7).coordinate
-                    unit_cell = ws.cell(row_count, column=8).coordinate
-
-                    # set defaults for isi
-                    if not ws[unit_cell].value or ws[qty_cell].value:
-                        ws[qty_cell] = 0
-
-                        ws[unit_cell] = "g"
-
-                    quantity = ws[qty_cell].value
-                    unit = ws[unit_cell].value
-
-                    if quantity == 0:
-                        ws[qty_cell] = 1
-
-                    # unit modification
-                    if unit.lower() == "kg":
-                        unit = "g"
-                        quantity *= 1000
-
-                    if unit.lower() == "l":
-                        unit = "ml"
-                        quantity *= 1000
-
-                    ws[unit_cell] = unit
-                    ws[qty_cell] = quantity
-
-                    qty_count += f"+'{ws.title}'!{qty_cell}"
-
-                    price_cell = ws.cell(row_count, column=5).coordinate
+                    # price/unit is already calculated, add it to running
+                    price_cell = ws.cell(row_count, column=9).coordinate
                     logger.debug(f"Price cell: {price_cell}")
-
                     price_count += f"+'{ws.title}'!{price_cell}"
 
             # reset row count for next ws
             row_count = 2
 
         # Close SUM brackets
-        qty_count += ")"
         price_count += ")"
-
-        avg_formula = f'={price_count}/{qty_count}'
+        avg_formula = f'={price_count}/{entry_count}'
         logger.info(f"returning {avg_formula}")
 
         return avg_formula
