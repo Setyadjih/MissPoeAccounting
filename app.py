@@ -163,6 +163,9 @@ class PembelianWidget(QWidget):
         vendor_data = QTableWidgetItem(self.ui.vendor_combo.currentText())
         vendor_data.setData(Qt.UserRole, self.ui.vendor_combo.currentText())
 
+        merek_data = QTableWidgetItem(self.ui.merek_line.text())
+        merek_data.setData(Qt.UserRole, self.ui.merek_line.text())
+
         item_data = QTableWidgetItem(self.ui.item_line.text())
         item_data.setData(Qt.UserRole, self.ui.item_line.text())
 
@@ -194,6 +197,7 @@ class PembelianWidget(QWidget):
             date_data,
             item_data,
             vendor_data,
+            merek_data,
             qty_data,
             unit_data,
             harga_data,
@@ -219,12 +223,13 @@ class PembelianWidget(QWidget):
                 date = self.ui.commit_table.item(row, 0).data(Qt.UserRole)
                 item = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
                 vendor = self.ui.commit_table.item(row, 2).data(Qt.UserRole)
-                quantity = self.ui.commit_table.item(row, 3).data(Qt.UserRole)
-                unit = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
-                harga = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
-                isi = self.ui.commit_table.item(row, 7).data(Qt.UserRole)
-                isi_unit = self.ui.commit_table.item(row, 8).data(Qt.UserRole)
-                category = self.ui.commit_table.item(row, 10).data(Qt.UserRole)
+                merek = self.ui.commit_table.iitem(row,3).data(Qt.UserRole)
+                quantity = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
+                unit = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
+                harga = self.ui.commit_table.item(row, 6).data(Qt.UserRole)
+                isi = self.ui.commit_table.item(row, 8).data(Qt.UserRole)
+                isi_unit = self.ui.commit_table.item(row, 9).data(Qt.UserRole)
+                category = self.ui.commit_table.item(row, 11).data(Qt.UserRole)
 
                 if not item:
                     self.__set_info("item is empty")
@@ -235,6 +240,7 @@ class PembelianWidget(QWidget):
                     date,
                     file,
                     vendor,
+                    merek,
                     item,
                     quantity,
                     unit,

@@ -4,7 +4,6 @@ from logging import getLogger
 
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.styles import numbers, Font, Alignment
 from openpyxl.styles.borders import Border, Side
 
 # Today as 30-Mar-19
@@ -41,7 +40,7 @@ def init_catsheet(file, logger):
             # For some reason == None works while  (not item) doesn't??
             if item in done_list or item == None:
                 continue
-            logger.info(f"WORKING ON:\n{item}")
+            logger.info(f"READING: {item}")
 
             # Try to get data from row. If missing data, give defaults
             try:
@@ -93,7 +92,7 @@ def init_catsheet(file, logger):
     logger.info("All done with init")
 
 
-def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
+def write_to_excel(date, file, vendor, merek, item, quantity, unit, cost, isi,
                    isi_unit, category, logger=None):
     """
     Write the given data to the purchasing excel sheet
@@ -101,6 +100,7 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
     :param date: date of purchase
     :param file: file path to excel sheet to edit
     :param vendor: Vendor WS to edit
+    :param merek: item brand
     :param item: name of item
     :param quantity: # of items
     :param unit: unit for item quantity
@@ -131,30 +131,31 @@ def write_to_excel(date, file, vendor, item, quantity, unit, cost, isi,
 
     input_vendor[f"A{last_row}"] = date
     input_vendor[f"B{last_row}"] = item
-    input_vendor[f"C{last_row}"] = quantity
-    input_vendor[f"D{last_row}"] = unit
-    input_vendor[f"E{last_row}"] = cost
-    input_vendor[f"F{last_row}"] = f'=C{last_row}*E{last_row}'
-    input_vendor[f"G{last_row}"] = isi
-    input_vendor[f"H{last_row}"] = isi_unit
-    input_vendor[f"I{last_row}"] = f"=F{last_row}/G{last_row}"
-    input_vendor[f"J{last_row}"] = category
+    input_vendor[f"C{last_row}"] = merek
+    input_vendor[f"D{last_row}"] = quantity
+    input_vendor[f"E{last_row}"] = unit
+    input_vendor[f"F{last_row}"] = cost
+    input_vendor[f"G{last_row}"] = f'=C{last_row}*E{last_row}'
+    input_vendor[f"H{last_row}"] = isi
+    input_vendor[f"I{last_row}"] = isi_unit
+    input_vendor[f"J{last_row}"] = f"=F{last_row}/G{last_row}"
+    input_vendor[f"K{last_row}"] = category
 
     # format cells for Rupiah
     logger.debug("Assigning format strings")
     date_cell = input_vendor.cell(last_row, 1)
     date_cell.number_format = DATE_FORMAT
 
-    cost_cell = input_vendor.cell(last_row, 5)
+    cost_cell = input_vendor.cell(last_row, 6)
     cost_cell.number_format = RP_FORMAT
 
-    total_cell = input_vendor.cell(last_row, 6)
+    total_cell = input_vendor.cell(last_row, 7)
     total_cell.number_format = RP_FORMAT
 
-    isi_cell = input_vendor.cell(last_row, 7)
+    isi_cell = input_vendor.cell(last_row, 8)
     isi_cell.number_format = COMMA_FORMAT
 
-    per_unit_cell = input_vendor.cell(last_row, 8)
+    per_unit_cell = input_vendor.cell(last_row, 9)
     per_unit_cell.number_format = RP_FORMAT
 
     update_cat(file, item, isi_unit, input_wb, category, logger)
@@ -257,12 +258,11 @@ def calc_totals(workbook: Workbook, item_name: str, logger=None):
             for row in ws.iter_rows(min_row=3, values_only=True):
                 row_count += 1
                 if row[1] == item_name:
-                    logger.debug(f"Found entry in {ws.title}")
+                    logger.debug(f"Found: {ws.title}, ROW: {row_count}")
                     entry_count += 1
 
                     # price/unit is already calculated, add it to running
-                    price_cell = ws.cell(row_count, column=9).coordinate
-                    logger.debug(f"Price cell: {price_cell}")
+                    price_cell = ws.cell(row_count, column=10).coordinate
                     price_count += f"+'{ws.title}'!{price_cell}"
 
             # reset row count for next ws
@@ -276,29 +276,3 @@ def calc_totals(workbook: Workbook, item_name: str, logger=None):
         return avg_formula
     except Exception as e:
         logger.error(f"ERROR: {e}")
-
-
-# TODO: This Might not be needed going forward.
-def update_formulas(excel_file):
-    """This should take the materials in the 'Material - *' sheets and
-    update any recipes using the listed ingredient's cost
-
-    excel_file: path to file to edit
-    """
-    # Load the excel file
-    workbook = openpyxl.load_workbook(excel_file)
-
-    material_names = [
-        "Material - Sundries",
-        "Material - Fresh",
-        "Material - Packaging"
-    ]
-
-    for sheets in material_names:
-        worksheet: Worksheet = workbook[sheets]
-        for row in range(6, worksheet.max_row):
-            cell_value = worksheet.cell(row=row, column=2).value
-            if cell_value:
-                mat_name = cell_value
-                mat_price_cell = worksheet.cell(row, 9).coordinate
-                print(mat_name, mat_price_cell)
