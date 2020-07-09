@@ -223,7 +223,7 @@ class PembelianWidget(QWidget):
                 date = self.ui.commit_table.item(row, 0).data(Qt.UserRole)
                 item = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
                 vendor = self.ui.commit_table.item(row, 2).data(Qt.UserRole)
-                merek = self.ui.commit_table.iitem(row,3).data(Qt.UserRole)
+                merek = self.ui.commit_table.item(row,3).data(Qt.UserRole)
                 quantity = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
                 unit = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
                 harga = self.ui.commit_table.item(row, 6).data(Qt.UserRole)
