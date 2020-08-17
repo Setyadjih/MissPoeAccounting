@@ -63,7 +63,7 @@ def init_catsheet(file, logger):
                     "Packing": "Packaging",
                     "Sundry": "Sundries"
                 }
-                cat: str = row[9]
+                cat: str = row[10]
                 if not cat:
                     logger.debug("Assigning to default")
                     cat = "Fresh"
@@ -255,7 +255,7 @@ def calc_totals(workbook: Workbook, item_name: str, logger=None):
             if ws.title in calc_sheets:
                 continue
 
-            for row in ws.iter_rows(min_row=3, values_only=True):
+            for row in ws.iter_rows(min_row=4, values_only=True):
                 row_count += 1
                 if row[1] == item_name:
                     logger.debug(f"Found: {ws.title}, ROW: {row_count}")

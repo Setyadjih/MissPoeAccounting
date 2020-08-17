@@ -53,9 +53,9 @@ class PembelianWidget(QWidget):
 
         # # FIXME:
         # TESTING PARAMS
-        self.ui.xls_file_browser.setText("D:\Miss "
-                                         "Poe\Costings\_data\Pembelian 2020 "
-                                         "TESTING.xlsx")
+        # self.ui.xls_file_browser.setText("D:\Miss "
+        #                                  "Poe\Costings\_data\Pembelian 2020 "
+        #                                  "TESTING.xlsx")
         self.ui.confirm_button.setEnabled(True)
         self.ui.init_button.setEnabled(True)
         self.ui.test_button.show()
@@ -92,7 +92,7 @@ class PembelianWidget(QWidget):
             init_catsheet(file, self.logger)
         except Exception as e:
             self.logger.error(e)
-            self.__set_info("Failed to init data!", "fail")
+            self.__set_info(f"Failed to init data! Error: {e}", "fail")
             return
         self.__set_info("All done!", "done")
 
