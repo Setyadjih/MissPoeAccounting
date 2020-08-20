@@ -65,18 +65,26 @@ class PembelianWidget(QWidget):
         for vendor in purchase_book.sheetnames:
             self.ui.vendor_combo.addItem(vendor)
 
+    def make_backup(self):
+        # Create a backup copy just in case
+        self.logger.info("Saving backup.")
+        file = self.ui.xls_file_browser.text()
+        dest = Path(file).with_suffix(".bak")
+        shutil.copyfile(file, dest)
+
     def init_cat_button(self):
         file = self.ui.xls_file_browser.text()
 
-        # Create a backup copy just in case
-        dest = Path(file).with_suffix(".bak")
-        shutil.copyfile(file, dest)
+        self.make_backup()
 
         # Setting up warning box to be sure
         warning = QMessageBox()
         warning.setIcon(QMessageBox.Warning)
-        warning.setText("Initializing the category data can take a long "
-                        "time, are you sure you want to do this?")
+        warning.setText(
+            "Initializing the category data can take a long time, are you sure"
+            " you want to do this?\n Please make sure to clear out the "
+            "category sheets before hand."
+        )
         warning.setWindowTitle("Are you sure?")
 
         # I don't really understand the pipe operator, but it works
@@ -212,6 +220,7 @@ class PembelianWidget(QWidget):
             self.ui.commit_table.setItem(new_row, column, item)
 
     def confirm_table(self):
+        self.make_backup()
         self.logger.info("Executing table")
         file = self.ui.xls_file_browser.text()
         if self.ui.commit_table.rowCount() == 0:
@@ -223,7 +232,7 @@ class PembelianWidget(QWidget):
                 date = self.ui.commit_table.item(row, 0).data(Qt.UserRole)
                 item = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
                 vendor = self.ui.commit_table.item(row, 2).data(Qt.UserRole)
-                merek = self.ui.commit_table.item(row,3).data(Qt.UserRole)
+                merek = self.ui.commit_table.item(row, 3).data(Qt.UserRole)
                 quantity = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
                 unit = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
                 harga = self.ui.commit_table.item(row, 6).data(Qt.UserRole)

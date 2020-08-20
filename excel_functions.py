@@ -12,6 +12,9 @@ DATE_FORMAT = "dd-mmm-yy"
 COMMA_FORMAT = "#,##0"
 RP_FORMAT = u'_("Rp"* #,##0_);_("Rp"* (#,##0);_("Rp"* "-"_);_(@_)'
 
+cat_sheets = {"LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging",
+                  "Utensils", "Appliances", "Cleaning"}
+
 
 def init_catsheet(file, logger):
     logger = logger if logger else getLogger()
@@ -20,9 +23,8 @@ def init_catsheet(file, logger):
     # formula
     input_wb = openpyxl.load_workbook(file, data_only=False)
 
-    cat_sheets = ["LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging",
-                  "Utensils", "Appliance"]
-    done_list = ['None', '']
+    # default dict
+    done_set = {"None", " "}
 
     # Iterate over all vendor sheets
     vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in cat_sheets]
@@ -37,22 +39,22 @@ def init_catsheet(file, logger):
             logger.debug(f"ROW: {row}")
 
             # Early check done_list to skip checking in cat sheet
-            # For some reason == None works while  (not item) doesn't??
-            if item in done_list or item == None:
+            if not item:
+                logger.debug("Skipping empty row")
                 continue
+
+            if item in done_set:
+                logger.debug("Skipping done item")
+                continue
+
             logger.info(f"READING: {item}")
 
             # Try to get data from row. If missing data, give defaults
             try:
-                isi_unit = row[7]
+                isi_unit = row[8]
                 if not isi_unit:
-                    isi_unit = row[3]
+                    isi_unit = row[4]
 
-                if type(isi_unit) != str or isi_unit == "kg":
-                    isi_unit = "g"
-
-                if isi_unit == "l":
-                    isi_unit = "ml"
             except IndexError:
                 logger.error("Isi error, assigning g")
                 isi_unit = "g"
@@ -84,12 +86,19 @@ def init_catsheet(file, logger):
                     logger.info("Item already in category, skipping")
                     continue
 
-            logger.info(f"Appending {item} to sheet")
+            logger.info(f"Appending {item} to {cat}")
             update_cat(file, item, isi_unit, input_wb, cat, logger)
 
-            done_list.append(item)
+            done_set.add(item)
 
     logger.info("All done with init")
+    print("Final outcome: ")
+    for cat in cat_sheets:
+        if cat == "LIST" or cat == "ITEM LIST":
+            continue
+        print(f"{cat}: ")
+        for row in input_wb[cat].iter_rows(values_only=True):
+            print(row)
 
 
 def write_to_excel(date, file, vendor, merek, item, quantity, unit, cost, isi,
@@ -135,10 +144,10 @@ def write_to_excel(date, file, vendor, merek, item, quantity, unit, cost, isi,
     input_vendor[f"D{last_row}"] = quantity
     input_vendor[f"E{last_row}"] = unit
     input_vendor[f"F{last_row}"] = cost
-    input_vendor[f"G{last_row}"] = f'=C{last_row}*E{last_row}'
+    input_vendor[f"G{last_row}"] = f'=D{last_row}*E{last_row}'
     input_vendor[f"H{last_row}"] = isi
     input_vendor[f"I{last_row}"] = isi_unit
-    input_vendor[f"J{last_row}"] = f"=F{last_row}/G{last_row}"
+    input_vendor[f"J{last_row}"] = f"=G{last_row}/H{last_row}"
     input_vendor[f"K{last_row}"] = category
 
     # format cells for Rupiah
@@ -238,9 +247,8 @@ def calc_totals(workbook: Workbook, item_name: str, logger=None):
     :return average
     """
     logger = logger if logger else getLogger()
-    logger.info("Calculating totals...")
+    logger.info(f"Calculating totals for {item_name}...")
     row_count = 2
-    calc_sheets = ['Fresh', 'Sundries', 'Packaging', 'Appliance', 'Utensils']
 
     # Iterating through each worksheet to find all entries of item
     logger.debug(f"Beginning iteration")
@@ -252,10 +260,10 @@ def calc_totals(workbook: Workbook, item_name: str, logger=None):
             ws = workbook[vendor]
 
             # Do not read from category sheets
-            if ws.title in calc_sheets:
+            if ws.title in cat_sheets:
                 continue
 
-            for row in ws.iter_rows(min_row=4, values_only=True):
+            for row in ws.iter_rows(min_row=3, values_only=True):
                 row_count += 1
                 if row[1] == item_name:
                     logger.debug(f"Found: {ws.title}, ROW: {row_count}")
