@@ -34,6 +34,7 @@ def init_catsheet(file, logger):
 
         logger.info("Starting processing")
         # Once the sheet is settled, start processing
+        row_count = 3
         for row in sheet.iter_rows(min_row=3, max_row=sheet.max_row, values_only=True):
             item = row[1]
             logger.debug(f"ROW: {row}")
@@ -42,6 +43,11 @@ def init_catsheet(file, logger):
             if not item:
                 logger.debug("Skipping empty row")
                 continue
+
+            # Formula correction
+            sheet[f"G{row_count}"] = f'=D{row_count}*F{row_count}'
+            sheet[f"J{row_count}"] = f"=G{row_count}/H{row_count}"
+            row_count += 1
 
             if item in done_set:
                 logger.debug("Skipping done item")
@@ -72,10 +78,10 @@ def init_catsheet(file, logger):
                 cat = cat.strip().lower().capitalize()
                 if cat in corrections.keys():
                     cat = corrections[cat]
-
             except IndexError:
                 logger.error("category error, assigning Fresh")
                 cat = "Fresh"
+
             logger.debug(f"Category: {cat}")
             cat_sheet = input_wb[cat]
 
@@ -90,6 +96,7 @@ def init_catsheet(file, logger):
             update_cat(file, item, isi_unit, input_wb, cat, logger)
 
             done_set.add(item)
+
 
     logger.info("All done with init")
     print("Final outcome: ")
@@ -144,7 +151,7 @@ def write_to_excel(date, file, vendor, merek, item, quantity, unit, cost, isi,
     input_vendor[f"D{last_row}"] = quantity
     input_vendor[f"E{last_row}"] = unit
     input_vendor[f"F{last_row}"] = cost
-    input_vendor[f"G{last_row}"] = f'=D{last_row}*E{last_row}'
+    input_vendor[f"G{last_row}"] = f'=D{last_row}*F{last_row}'
     input_vendor[f"H{last_row}"] = isi
     input_vendor[f"I{last_row}"] = isi_unit
     input_vendor[f"J{last_row}"] = f"=G{last_row}/H{last_row}"
