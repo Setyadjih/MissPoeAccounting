@@ -266,7 +266,7 @@ class PembelianWidget(QWidget):
             self.__set_info("Nothing to write")
             return
 
-        for row in range(self.ui.commit_table.rowCount:
+        for row in range(self.ui.commit_table.rowCount):
             try:
                 # Get values from item ranges
                 date = self.ui.commit_table.item(row, 0).data(Qt.UserRole)
