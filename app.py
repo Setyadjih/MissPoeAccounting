@@ -20,6 +20,7 @@ from excel_functions import write_to_excel, init_catsheet
 import constants
 
 
+# noinspection SpellCheckingInspection
 class PembelianWidget(QWidget):
     def __init__(self, parent=None):
         super(PembelianWidget, self).__init__(parent)
@@ -32,6 +33,7 @@ class PembelianWidget(QWidget):
         # Context menu setup
         self.ui.commit_table.setContextMenuPolicy(Qt.ActionsContextMenu)
         self.del_row_action = QAction(self, text="Delete Table Row")
+        # noinspection PyUnresolvedReferences
         self.del_row_action.triggered.connect(self.delete_table_row)
         self.ui.commit_table.addAction(self.del_row_action)
 
@@ -43,6 +45,34 @@ class PembelianWidget(QWidget):
         # Default test button to hide
         self.ui.test_button.hide()
 
+        # Setup Category list
+        self.categories = {"MISC": [], "CATEGORIES": []}
+        with open("excel_categories.txt") as cat_ref:
+            print("IMPORTING CATEGORIES")
+            cat_flag = False
+            for line in cat_ref.readlines():
+                line = line.rstrip()
+                if not line:
+                    continue
+                # Flag check
+                if line == "[CATEGORIES]":
+                    cat_flag = True
+                    continue
+                elif line == "[MISC]":
+                    cat_flag = False
+                    continue
+
+                # input to category dictionary
+                if cat_flag:
+                    self.logger.debug(f"Adding category {line}")
+                    self.categories["CATEGORIES"].append(line)
+                else:
+                    self.logger.debug(f"Adding misc {line}")
+                    self.categories["MISC"].append(line)
+
+        self.ui.category_combo.clear()
+        self.ui.category_combo.addItems(self.categories["CATEGORIES"])
+
         # Hookup buttons
         self.ui.test_button.clicked.connect(self.test_func)
 
@@ -53,9 +83,9 @@ class PembelianWidget(QWidget):
 
         # # FIXME:
         # TESTING PARAMS
-        # self.ui.xls_file_browser.setText("D:\Miss "
-        #                                  "Poe\Costings\_data\Pembelian 2020 "
-        #                                  "TESTING.xlsx")
+        self.ui.xls_file_browser.setText(
+            "D:\Miss Poe\Costings\_data\Pembelian 2020_TESTING_CLEANED.xlsx"
+        )
         self.ui.confirm_button.setEnabled(True)
         self.ui.init_button.setEnabled(True)
         self.ui.test_button.show()
@@ -97,7 +127,7 @@ class PembelianWidget(QWidget):
 
         self.__set_info("Working on data....")
         try:
-            init_catsheet(file, self.logger)
+            init_catsheet(file, self.categories, self.logger)
         except Exception as e:
             self.logger.error(e)
             self.__set_info(f"Failed to init data! Error: {e}", "fail")
@@ -147,13 +177,13 @@ class PembelianWidget(QWidget):
         self.__set_info("Cleared inputs!", status="done")
 
     def add_to_table(self):
+        # Table entry validation
         if (
             self.ui.harga_spin.value() == 0
             or self.ui.isi_spin.value() == 0
             or self.ui.qty_spin.value() == 0
             or not self.ui.date_line.text()
             or not self.ui.isi_unit_line.text()
-            or not self.ui.merek_line.text()
             or not self.ui.item_line.text()
             or not self.ui.vendor_combo.currentText()
         ):
@@ -177,6 +207,8 @@ class PembelianWidget(QWidget):
         vendor_data = QTableWidgetItem(self.ui.vendor_combo.currentText())
         vendor_data.setData(Qt.UserRole, self.ui.vendor_combo.currentText())
 
+        if not self.ui.merek_line.text():
+            self.ui.merek_line.setText("")
         merek_data = QTableWidgetItem(self.ui.merek_line.text())
         merek_data.setData(Qt.UserRole, self.ui.merek_line.text())
 
@@ -233,8 +265,9 @@ class PembelianWidget(QWidget):
         if self.ui.commit_table.rowCount() == 0:
             self.__set_info("Nothing to write")
             return
-        try:
-            for row in range(self.ui.commit_table.rowCount()):
+
+        for row in range(self.ui.commit_table.rowCount:
+            try:
                 # Get values from item ranges
                 date = self.ui.commit_table.item(row, 0).data(Qt.UserRole)
                 item = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
@@ -253,6 +286,7 @@ class PembelianWidget(QWidget):
 
                 # Execute table to excel
                 write_to_excel(
+                    self.categories,
                     date,
                     file,
                     vendor,
@@ -268,10 +302,12 @@ class PembelianWidget(QWidget):
                 )
 
                 self.__set_info("Writing to Excel sheet...")
-        except Exception as error:
-            self.__set_info(f"Failed writing to excel sheet! Reason: {error}", "fail")
-            self.logger.error(f"Error: {error}")
-            return
+            except Exception as error:
+                self.logger.error(f"Failed on "
+                                  f"{self.ui.commit_table.item(row, 1)}")
+                self.__set_info(f"Failed writing to excel sheet! Reason: {error}", "fail")
+                self.logger.error(f"Error: {error}")
+                return
         self.clean_table()
 
         self.__set_info("All done writing!", status="done")
@@ -298,6 +334,7 @@ class PembelianWidget(QWidget):
 
         self.ui.status_bar.setText(message)
         self.ui.status_bar.setStyleSheet("color: {}".format(color))
+        # noinspection PyUnresolvedReferences
         qApp.processEvents()  # update the UI
 
 

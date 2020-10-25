@@ -16,7 +16,7 @@ cat_sheets = {"LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging",
                   "Utensils", "Appliances", "Cleaning"}
 
 
-def init_catsheet(file, logger):
+def init_catsheet(file, categories:dict, logger):
     logger = logger if logger else getLogger()
     # Load excel file path
     # Due to openpyxl's structure, we need the data_only=False wb to save
@@ -27,7 +27,7 @@ def init_catsheet(file, logger):
     done_set = {"None", " "}
 
     # Iterate over all vendor sheets
-    vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in cat_sheets]
+    vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in categories.values()]
     for sheet_name in vendor_sheets:
         sheet: Worksheet = input_wb[sheet_name]
         logger.info(f"Sheet: {sheet}")
@@ -99,19 +99,18 @@ def init_catsheet(file, logger):
 
     logger.info("All done with init")
     print("Final outcome: ")
-    for cat in cat_sheets:
-        if cat == "LIST" or cat == "ITEM LIST":
-            continue
+    for cat in categories["CATEGORIES"]:
         print(f"{cat}: ")
         for row in input_wb[cat].iter_rows(values_only=True):
             print(row)
 
 
-def write_to_excel(date, file, vendor, merek, item, quantity, unit, cost, isi,
-                   isi_unit, category, logger=None):
+def write_to_excel(categories: dict, date, file, vendor, merek, item,
+                   quantity, unit, cost, isi, isi_unit, category, logger=None):
     """
     Write the given data to the purchasing excel sheet
 
+    :param categories dict
     :param date: date of purchase
     :param file: file path to excel sheet to edit
     :param vendor: Vendor WS to edit
@@ -173,10 +172,10 @@ def write_to_excel(date, file, vendor, merek, item, quantity, unit, cost, isi,
     per_unit_cell = input_vendor.cell(last_row, 9)
     per_unit_cell.number_format = RP_FORMAT
 
-    update_cat(file, item, isi_unit, input_wb, category, logger)
+    update_cat(categories, file, item, isi_unit, input_wb, category, logger)
 
 
-def update_cat(file, item, isi_unit, input_wb, category, logger):
+def update_cat(categories, file, item, isi_unit, input_wb, category, logger):
 
     # Append to costing according to category
     try:
@@ -202,7 +201,7 @@ def update_cat(file, item, isi_unit, input_wb, category, logger):
     # average = "=SUM(VENDOR!A1+VENDOR!B3....)/(number of vendors)
     # This workbook is to parse data from formulas (SEPERATE FROM INPUT WB)
     value_wb = openpyxl.load_workbook(file, data_only=True)
-    average = calc_totals(value_wb, item, logger)
+    average = calc_totals(categories, value_wb, item, logger)
     cs = cat_sheet.iter_rows(min_row=3, min_col=1, max_col=1, values_only=True)
 
     # check if item already in sheet
@@ -244,10 +243,11 @@ def update_cat(file, item, isi_unit, input_wb, category, logger):
     logger.info("Finished writing to workbook")
 
 
-def calc_totals(workbook: Workbook, item_name: str, logger=None):
+def calc_totals(categories: dict, workbook: Workbook, item_name: str, logger=None):
     """Calculate average price for each item, total quantity, total units
 
     :param workbook: worksheet to read from
+    :param categories: dictionary of category sheets
     :param item_name: name of item to check
     :param logger: logger pass through
     :return average
@@ -266,7 +266,7 @@ def calc_totals(workbook: Workbook, item_name: str, logger=None):
             ws = workbook[vendor]
 
             # Do not read from category sheets
-            if ws.title in cat_sheets:
+            if ws.title in list(categories.keys()):
                 continue
 
             for row in ws.iter_rows(min_row=3, values_only=True):
