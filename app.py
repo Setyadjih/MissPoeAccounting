@@ -151,8 +151,14 @@ class PembelianWidget(QWidget):
             self.ui.harga_spin.value() == 0
             or self.ui.isi_spin.value() == 0
             or self.ui.qty_spin.value() == 0
+            or not self.ui.date_line.text()
+            or not self.ui.isi_unit_line.text()
+            or not self.ui.merek_line.text()
+            or not self.ui.item_line.text()
+            or not self.ui.vendor_combo.currentText()
         ):
             self.__set_info("Values cannot be 0!", "fail")
+            return
 
         date_text = self.ui.date_line.text()
         date = datetime.strptime(date_text, "%d-%b-%y")
@@ -218,6 +224,7 @@ class PembelianWidget(QWidget):
 
         for column, item in enumerate(details):
             self.ui.commit_table.setItem(new_row, column, item)
+        self.__set_info("Adding item to table...")
 
     def confirm_table(self):
         self.make_backup()

@@ -97,7 +97,6 @@ def init_catsheet(file, logger):
 
             done_set.add(item)
 
-
     logger.info("All done with init")
     print("Final outcome: ")
     for cat in cat_sheets:
