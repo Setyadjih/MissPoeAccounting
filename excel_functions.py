@@ -7,7 +7,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles.borders import Border, Side
 
 # Today as 30-Mar-19
-DATE_FORMAT = "dd-mmm-yy"
+DATE_FORMAT = "dd/mm/yy"
 
 COMMA_FORMAT = "#,##0"
 RP_FORMAT = u'_("Rp"* #,##0_);_("Rp"* (#,##0);_("Rp"* "-"_);_(@_)'

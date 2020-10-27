@@ -191,7 +191,7 @@ class PembelianWidget(QWidget):
             return
 
         date_text = self.ui.date_line.text()
-        date = datetime.strptime(date_text, "%d-%b-%y")
+        date = datetime.strptime(date_text, "%d/%m/%y")
 
         # Commit input to table
         row_count = self.ui.commit_table.rowCount()
@@ -266,7 +266,7 @@ class PembelianWidget(QWidget):
             self.__set_info("Nothing to write")
             return
 
-        for row in range(self.ui.commit_table.rowCount):
+        for row in range(self.ui.commit_table.rowCount()):
             try:
                 # Get values from item ranges
                 date = self.ui.commit_table.item(row, 0).data(Qt.UserRole)
