@@ -232,8 +232,8 @@ class PembelianWidget(QWidget):
         qty_data = QTableWidgetItem(self.ui.qty_spin.text())
         qty_data.setData(Qt.UserRole, self.ui.qty_spin.value())
 
-        unit_data = QTableWidgetItem(self.ui.unit_line.text())
-        unit_data.setData(Qt.UserRole, self.ui.unit_line.text())
+        unit_data = QTableWidgetItem(self.ui.unit_combo.currentText())
+        unit_data.setData(Qt.UserRole, self.ui.unit_combo.currentText())
 
         harga_data = QTableWidgetItem(self.ui.harga_spin.text())
         harga_data.setData(Qt.UserRole, self.ui.harga_spin.value())
@@ -244,8 +244,8 @@ class PembelianWidget(QWidget):
         isi_data = QTableWidgetItem(self.ui.isi_spin.text())
         isi_data.setData(Qt.UserRole, self.ui.isi_spin.value())
 
-        isi_unit_data = QTableWidgetItem(self.ui.isi_unit_line.text())
-        isi_unit_data.setData(Qt.UserRole, self.ui.isi_unit_line.text())
+        isi_unit_data = QTableWidgetItem(self.ui.isi_unit_combo.currentText())
+        isi_unit_data.setData(Qt.UserRole, self.ui.isi_unit_combo.currentText())
 
         unit_harga_data = QTableWidgetItem(str(unit_cost))
         unit_harga_data.setData(Qt.UserRole, unit_cost)
