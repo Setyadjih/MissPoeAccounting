@@ -18,6 +18,7 @@ from utils import get_logger
 from resources.pembelian_ui_ss import Ui_pembelian
 from excel_functions import write_to_excel, init_catsheet
 import constants
+from constants import CAT_REF
 
 
 # noinspection SpellCheckingInspection
@@ -47,8 +48,20 @@ class PembelianWidget(QWidget):
 
         # Setup Category list
         self.categories = {"MISC": [], "CATEGORIES": []}
-        with open("excel_categories.txt") as cat_ref:
-            print("IMPORTING CATEGORIES")
+
+        # category reference check
+        if not Path(CAT_REF).exists():
+            self.logger.info("Creating new cat ref file")
+            with open(CAT_REF, "w") as new_file:
+                new_file.write(constants.DEFAULT_CATEGORIES)
+            message = QMessageBox()
+            message.setWindowTitle("Default categories file created")
+            message.setText(f"A default category list was created. Please "
+                            f"edit the {CAT_REF} file and rerun "
+                            f"the program if you need to add categories")
+            message.exec_()
+
+        with open(CAT_REF) as cat_ref:
             cat_flag = False
             for line in cat_ref.readlines():
                 line = line.rstrip()
@@ -83,12 +96,13 @@ class PembelianWidget(QWidget):
 
         # # FIXME:
         # TESTING PARAMS
-        self.ui.xls_file_browser.setText(
-            "D:\Miss Poe\Costings\_data\Pembelian 2020_TESTING_CLEANED.xlsx"
-        )
-        self.ui.confirm_button.setEnabled(True)
-        self.ui.init_button.setEnabled(True)
-        self.ui.test_button.show()
+        # self.ui.xls_file_browser.setText(
+        #     "D:\Miss Poe\Costings\_data\Pembelian 2020_TESTING_CLEANED.xlsx"
+        # )
+        # self.ui.test_button.show()
+
+        self.ui.confirm_button.setDisabled(True)
+        self.ui.init_button.setDisabled(True)
 
     def test_func(self):
         purchase_book = load_workbook(self.ui.xls_file_browser.text())
