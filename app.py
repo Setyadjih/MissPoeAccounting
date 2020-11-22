@@ -197,7 +197,7 @@ class PembelianWidget(QWidget):
             or self.ui.isi_spin.value() == 0
             or self.ui.qty_spin.value() == 0
             or not self.ui.date_line.text()
-            or not self.ui.isi_unit_line.text()
+            or not self.ui.isi_unit_combo.currentText()
             or not self.ui.item_line.text()
             or not self.ui.vendor_combo.currentText()
         ):

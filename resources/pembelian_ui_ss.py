@@ -187,6 +187,7 @@ class Ui_pembelian(object):
         self.unit_combo.addItem("")
         self.unit_combo.addItem("")
         self.unit_combo.addItem("")
+        self.unit_combo.addItem("")
         self.unit_combo.setObjectName(u"unit_combo")
 
         self.horizontalLayout_7.addWidget(self.unit_combo)
@@ -470,6 +471,7 @@ class Ui_pembelian(object):
         self.unit_combo.setItemText(3, QCoreApplication.translate("pembelian", u"g", None))
         self.unit_combo.setItemText(4, QCoreApplication.translate("pembelian", u"L", None))
         self.unit_combo.setItemText(5, QCoreApplication.translate("pembelian", u"ml", None))
+        self.unit_combo.setItemText(6, QCoreApplication.translate("pembelian", u"sak", None))
 
         self.isi_unit_label.setText(QCoreApplication.translate("pembelian", u"Unit", None))
         self.isi_unit_combo.setItemText(0, QCoreApplication.translate("pembelian", u"pcs", None))
