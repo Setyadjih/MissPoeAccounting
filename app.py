@@ -146,6 +146,7 @@ class PembelianWidget(QWidget):
             self.logger.error(e)
             self.__set_info(f"Failed to init data! Error: {e}", "fail")
             return
+        self.logger.info("Finished init")
         self.__set_info("All done!", "done")
 
     def delete_table_row(self):

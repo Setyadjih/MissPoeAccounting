@@ -25,6 +25,7 @@ def init_catsheet(file, categories:dict, logger):
 
     # default dict
     done_set = {"None", " "}
+    errors = {}
 
     # Iterate over all vendor sheets
     vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in categories.values()]
@@ -69,7 +70,8 @@ def init_catsheet(file, categories:dict, logger):
                 corrections = {
                     "Utensil": "Utensils",
                     "Packing": "Packaging",
-                    "Sundry": "Sundries"
+                    "Sundry": "Sundries",
+                    "Alat tulis": "Stationary"
                 }
                 cat: str = row[10]
                 if not cat:
@@ -93,7 +95,7 @@ def init_catsheet(file, categories:dict, logger):
                     continue
 
             logger.info(f"Appending {item} to {cat}")
-            update_cat(file, item, isi_unit, input_wb, cat, logger)
+            update_cat(categories, file, item, isi_unit, input_wb, cat, logger)
 
             done_set.add(item)
 

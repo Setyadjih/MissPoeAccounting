@@ -1,6 +1,6 @@
 from datetime import date
 
-APP_VERSION = 'v0.1.21'
+APP_VERSION = 'v0.1.23'
 DATE = date.today().strftime("%d/%m/%y")
 
 CAT_REF = "excel_categories.txt"
