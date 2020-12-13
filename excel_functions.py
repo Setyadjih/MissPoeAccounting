@@ -25,17 +25,17 @@ def init_catsheet(file, categories:dict, logger):
 
     # default dict
     done_set = {"None", " "}
-    errors = {}
+    skip_list = categories["CATEGORIES"] + categories["MISC"]
 
     # Iterate over all vendor sheets
-    vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in categories.values()]
+    vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in skip_list]
+    logger.debug(f"VENDORS: {vendor_sheets}")
     for sheet_name in vendor_sheets:
         sheet: Worksheet = input_wb[sheet_name]
         logger.info(f"Sheet: {sheet}")
 
         logger.info("Starting processing")
         # Once the sheet is settled, start processing
-        row_count = 3
         for row in sheet.iter_rows(min_row=3, max_row=sheet.max_row, values_only=True):
             item = row[1]
             logger.debug(f"ROW: {row}")
@@ -44,11 +44,6 @@ def init_catsheet(file, categories:dict, logger):
             if not item:
                 logger.debug("Skipping empty row")
                 continue
-
-            # Formula correction
-            sheet[f"G{row_count}"] = f'=D{row_count}*F{row_count}'
-            sheet[f"J{row_count}"] = f"=G{row_count}/H{row_count}"
-            row_count += 1
 
             if item in done_set:
                 logger.debug("Skipping done item")
@@ -71,7 +66,9 @@ def init_catsheet(file, categories:dict, logger):
                     "Utensil": "Utensils",
                     "Packing": "Packaging",
                     "Sundry": "Sundries",
-                    "Alat tulis": "Stationary"
+                    "Alat tulis": "Stationary",
+                    "Stationery": "Stationary",
+                    "Appliance": "Appliances"
                 }
                 cat: str = row[10]
                 if not cat:

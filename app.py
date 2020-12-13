@@ -61,6 +61,7 @@ class PembelianWidget(QWidget):
                             f"the program if you need to add categories")
             message.exec_()
 
+        # Read excel_categories.txt to list available categories
         with open(CAT_REF) as cat_ref:
             cat_flag = False
             for line in cat_ref.readlines():

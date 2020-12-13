@@ -15,4 +15,5 @@ Packaging
 Utensils
 Appliances
 Cleaning
+Stationary
 """
