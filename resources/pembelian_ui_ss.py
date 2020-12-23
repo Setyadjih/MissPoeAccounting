@@ -180,12 +180,18 @@ class Ui_pembelian(object):
 
         self.horizontalLayout_7.addWidget(self.unit_label)
 
-        self.unit_line = QLineEdit(self.inner_frame)
-        self.unit_line.setObjectName(u"unit_line")
-        self.unit_line.setMinimumSize(QSize(82, 0))
-        self.unit_line.setMaximumSize(QSize(82, 16777215))
+        self.unit_combo = QComboBox(self.inner_frame)
+        self.unit_combo.addItem("")
+        self.unit_combo.addItem("")
+        self.unit_combo.addItem("")
+        self.unit_combo.addItem("")
+        self.unit_combo.addItem("")
+        self.unit_combo.addItem("")
+        self.unit_combo.addItem("")
+        self.unit_combo.addItem("")
+        self.unit_combo.setObjectName(u"unit_combo")
 
-        self.horizontalLayout_7.addWidget(self.unit_line)
+        self.horizontalLayout_7.addWidget(self.unit_combo)
 
         self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -222,11 +228,15 @@ class Ui_pembelian(object):
 
         self.horizontalLayout_8.addWidget(self.isi_unit_label)
 
-        self.isi_unit_line = QLineEdit(self.inner_frame)
-        self.isi_unit_line.setObjectName(u"isi_unit_line")
-        self.isi_unit_line.setMaximumSize(QSize(82, 16777215))
+        self.isi_unit_combo = QComboBox(self.inner_frame)
+        self.isi_unit_combo.addItem("")
+        self.isi_unit_combo.addItem("")
+        self.isi_unit_combo.addItem("")
+        self.isi_unit_combo.addItem("")
+        self.isi_unit_combo.addItem("")
+        self.isi_unit_combo.setObjectName(u"isi_unit_combo")
 
-        self.horizontalLayout_8.addWidget(self.isi_unit_line)
+        self.horizontalLayout_8.addWidget(self.isi_unit_combo)
 
         self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -456,9 +466,22 @@ class Ui_pembelian(object):
         self.label_2.setText(QCoreApplication.translate("pembelian", u"Category", None))
         self.label_3.setText(QCoreApplication.translate("pembelian", u"Merek", None))
         self.unit_label.setText(QCoreApplication.translate("pembelian", u"Unit", None))
-        self.unit_line.setText(QCoreApplication.translate("pembelian", u"kg", None))
+        self.unit_combo.setItemText(0, QCoreApplication.translate("pembelian", u"ctn", None))
+        self.unit_combo.setItemText(1, QCoreApplication.translate("pembelian", u"pack", None))
+        self.unit_combo.setItemText(2, QCoreApplication.translate("pembelian", u"pcs", None))
+        self.unit_combo.setItemText(3, QCoreApplication.translate("pembelian", u"Kg", None))
+        self.unit_combo.setItemText(4, QCoreApplication.translate("pembelian", u"g", None))
+        self.unit_combo.setItemText(5, QCoreApplication.translate("pembelian", u"L", None))
+        self.unit_combo.setItemText(6, QCoreApplication.translate("pembelian", u"ml", None))
+        self.unit_combo.setItemText(7, QCoreApplication.translate("pembelian", u"sak", None))
+
         self.isi_unit_label.setText(QCoreApplication.translate("pembelian", u"Unit", None))
-        self.isi_unit_line.setText(QCoreApplication.translate("pembelian", u"g", None))
+        self.isi_unit_combo.setItemText(0, QCoreApplication.translate("pembelian", u"pcs", None))
+        self.isi_unit_combo.setItemText(1, QCoreApplication.translate("pembelian", u"Kg", None))
+        self.isi_unit_combo.setItemText(2, QCoreApplication.translate("pembelian", u"g", None))
+        self.isi_unit_combo.setItemText(3, QCoreApplication.translate("pembelian", u"L", None))
+        self.isi_unit_combo.setItemText(4, QCoreApplication.translate("pembelian", u"ml", None))
+
         self.add_vendor_button.setText(QCoreApplication.translate("pembelian", u"Add", None))
         ___qtablewidgetitem = self.commit_table.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("pembelian", u"Date", None));

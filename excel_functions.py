@@ -7,16 +7,16 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles.borders import Border, Side
 
 # Today as 30-Mar-19
-DATE_FORMAT = "dd/mm/yy"
+DATE_FORMAT = "dd-mmm-yy"
 
 COMMA_FORMAT = "#,##0"
 RP_FORMAT = u'_("Rp"* #,##0_);_("Rp"* (#,##0);_("Rp"* "-"_);_(@_)'
 
 cat_sheets = {"LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging",
-                  "Utensils", "Appliances", "Cleaning"}
+              "Utensils", "Appliances", "Cleaning"}
 
 
-def init_catsheet(file, categories:dict, logger):
+def init_catsheet(file, categories: dict, logger):
     logger = logger if logger else getLogger()
     # Load excel file path
     # Due to openpyxl's structure, we need the data_only=False wb to save
@@ -25,34 +25,26 @@ def init_catsheet(file, categories:dict, logger):
 
     # default dict
     done_set = {"None", " "}
+    skip_list = categories["CATEGORIES"] + categories["MISC"]
 
     # Iterate over all vendor sheets
-    vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in categories.values()]
+    vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in skip_list]
+    logger.debug(f"VENDORS: {vendor_sheets}")
     for sheet_name in vendor_sheets:
         sheet: Worksheet = input_wb[sheet_name]
         logger.info(f"Sheet: {sheet}")
 
         logger.info("Starting processing")
         # Once the sheet is settled, start processing
-        row_count = 3
         for row in sheet.iter_rows(min_row=3, max_row=sheet.max_row, values_only=True):
             item = row[1]
-            logger.debug(f"ROW: {row}")
 
             # Early check done_list to skip checking in cat sheet
-            if not item:
-                logger.debug("Skipping empty row")
+            if not item or item in done_set:
+                logger.debug("Skipping item")
                 continue
 
-            # Formula correction
-            sheet[f"G{row_count}"] = f'=D{row_count}*F{row_count}'
-            sheet[f"J{row_count}"] = f"=G{row_count}/H{row_count}"
-            row_count += 1
-
-            if item in done_set:
-                logger.debug("Skipping done item")
-                continue
-
+            logger.debug(f"ROW: {row}")
             logger.info(f"READING: {item}")
 
             # Try to get data from row. If missing data, give defaults
@@ -69,7 +61,10 @@ def init_catsheet(file, categories:dict, logger):
                 corrections = {
                     "Utensil": "Utensils",
                     "Packing": "Packaging",
-                    "Sundry": "Sundries"
+                    "Sundry": "Sundries",
+                    "Alat tulis": "Stationary",
+                    "Stationery": "Stationary",
+                    "Appliance": "Appliances"
                 }
                 cat: str = row[10]
                 if not cat:
@@ -93,7 +88,7 @@ def init_catsheet(file, categories:dict, logger):
                     continue
 
             logger.info(f"Appending {item} to {cat}")
-            update_cat(file, item, isi_unit, input_wb, cat, logger)
+            update_cat(categories, file, item, isi_unit, input_wb, cat, logger)
 
             done_set.add(item)
 
@@ -137,7 +132,7 @@ def write_to_excel(categories: dict, date, file, vendor, merek, item,
     logger.debug(f"last row = {last_row}")
 
     # check for empty row error
-    while not input_vendor[f"B{last_row-1}"].value:
+    while not input_vendor[f"B{last_row - 1}"].value:
         logger.debug("Previous row empty, going up one")
         last_row -= 1
 
@@ -176,7 +171,6 @@ def write_to_excel(categories: dict, date, file, vendor, merek, item,
 
 
 def update_cat(categories, file, item, isi_unit, input_wb, category, logger):
-
     # Append to costing according to category
     try:
         cat_sheet = input_wb[category]
@@ -199,7 +193,7 @@ def update_cat(categories, file, item, isi_unit, input_wb, category, logger):
 
     logger.debug(f"Assigning {item} to {category}")
     # average = "=SUM(VENDOR!A1+VENDOR!B3....)/(number of vendors)
-    # This workbook is to parse data from formulas (SEPERATE FROM INPUT WB)
+    # This workbook is to parse data from formulas (SEPARATE FROM INPUT WB)
     value_wb = openpyxl.load_workbook(file, data_only=True)
     average = calc_totals(categories, value_wb, item, logger)
     cs = cat_sheet.iter_rows(min_row=3, min_col=1, max_col=1, values_only=True)
