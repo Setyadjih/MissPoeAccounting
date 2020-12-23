@@ -109,6 +109,11 @@ class Ui_pembelian(object):
 
         self.verticalLayout.addWidget(self.vendor_label)
 
+        self.label_2 = QLabel(self.inner_frame)
+        self.label_2.setObjectName(u"label_2")
+
+        self.verticalLayout.addWidget(self.label_2)
+
         self.item_label = QLabel(self.inner_frame)
         self.item_label.setObjectName(u"item_label")
 
@@ -128,11 +133,6 @@ class Ui_pembelian(object):
         self.isi_label.setObjectName(u"isi_label")
 
         self.verticalLayout.addWidget(self.isi_label)
-
-        self.label_2 = QLabel(self.inner_frame)
-        self.label_2.setObjectName(u"label_2")
-
-        self.verticalLayout.addWidget(self.label_2)
 
         self.label_3 = QLabel(self.inner_frame)
         self.label_3.setObjectName(u"label_3")
@@ -155,11 +155,37 @@ class Ui_pembelian(object):
 
         self.input_layout.addWidget(self.vendor_combo)
 
+        self.category_combo = QComboBox(self.inner_frame)
+        self.category_combo.setObjectName(u"category_combo")
+        self.category_combo.setMaximumSize(QSize(100, 16777215))
+
+        self.input_layout.addWidget(self.category_combo)
+
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.item_combo = QComboBox(self.inner_frame)
+        self.item_combo.setObjectName(u"item_combo")
+        sizePolicy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.item_combo.sizePolicy().hasHeightForWidth())
+        self.item_combo.setSizePolicy(sizePolicy)
+
+        self.horizontalLayout_2.addWidget(self.item_combo)
+
         self.item_line = QLineEdit(self.inner_frame)
         self.item_line.setObjectName(u"item_line")
         self.item_line.setMaximumSize(QSize(500, 16777215))
 
-        self.input_layout.addWidget(self.item_line)
+        self.horizontalLayout_2.addWidget(self.item_line)
+
+        self.new_item_check = QCheckBox(self.inner_frame)
+        self.new_item_check.setObjectName(u"new_item_check")
+
+        self.horizontalLayout_2.addWidget(self.new_item_check)
+
+
+        self.input_layout.addLayout(self.horizontalLayout_2)
 
         self.horizontalLayout_7 = QHBoxLayout()
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
@@ -244,12 +270,6 @@ class Ui_pembelian(object):
 
 
         self.input_layout.addLayout(self.horizontalLayout_8)
-
-        self.category_combo = QComboBox(self.inner_frame)
-        self.category_combo.setObjectName(u"category_combo")
-        self.category_combo.setMaximumSize(QSize(100, 16777215))
-
-        self.input_layout.addWidget(self.category_combo)
 
         self.merek_line = QLineEdit(self.inner_frame)
         self.merek_line.setObjectName(u"merek_line")
@@ -348,11 +368,11 @@ class Ui_pembelian(object):
         __qtablewidgetitem11 = QTableWidgetItem()
         self.commit_table.setHorizontalHeaderItem(11, __qtablewidgetitem11)
         self.commit_table.setObjectName(u"commit_table")
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.commit_table.sizePolicy().hasHeightForWidth())
-        self.commit_table.setSizePolicy(sizePolicy)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.commit_table.sizePolicy().hasHeightForWidth())
+        self.commit_table.setSizePolicy(sizePolicy1)
         self.commit_table.setMinimumSize(QSize(850, 300))
         self.commit_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.commit_table.horizontalHeader().setCascadingSectionResizes(True)
@@ -380,11 +400,11 @@ class Ui_pembelian(object):
 
         self.test_button = QPushButton(self.inner_frame_3)
         self.test_button.setObjectName(u"test_button")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.test_button.sizePolicy().hasHeightForWidth())
-        self.test_button.setSizePolicy(sizePolicy1)
+        sizePolicy2 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.test_button.sizePolicy().hasHeightForWidth())
+        self.test_button.setSizePolicy(sizePolicy2)
         self.test_button.setMinimumSize(QSize(75, 20))
         self.test_button.setMaximumSize(QSize(75, 20))
         self.test_button.setStyleSheet(u"")
@@ -394,8 +414,8 @@ class Ui_pembelian(object):
 
         self.confirm_button = QPushButton(self.inner_frame_3)
         self.confirm_button.setObjectName(u"confirm_button")
-        sizePolicy1.setHeightForWidth(self.confirm_button.sizePolicy().hasHeightForWidth())
-        self.confirm_button.setSizePolicy(sizePolicy1)
+        sizePolicy2.setHeightForWidth(self.confirm_button.sizePolicy().hasHeightForWidth())
+        self.confirm_button.setSizePolicy(sizePolicy2)
         self.confirm_button.setMinimumSize(QSize(75, 20))
 
         self.horizontalLayout_9.addWidget(self.confirm_button)
@@ -459,15 +479,16 @@ class Ui_pembelian(object):
         pembelian.setWindowTitle(QCoreApplication.translate("pembelian", u"Form", None))
         self.label.setText(QCoreApplication.translate("pembelian", u"Date", None))
         self.vendor_label.setText(QCoreApplication.translate("pembelian", u"Vendor", None))
+        self.label_2.setText(QCoreApplication.translate("pembelian", u"Category", None))
         self.item_label.setText(QCoreApplication.translate("pembelian", u"Item", None))
         self.qty_label.setText(QCoreApplication.translate("pembelian", u"Quantity", None))
         self.harga_label.setText(QCoreApplication.translate("pembelian", u"Harga", None))
         self.isi_label.setText(QCoreApplication.translate("pembelian", u"Isi", None))
-        self.label_2.setText(QCoreApplication.translate("pembelian", u"Category", None))
         self.label_3.setText(QCoreApplication.translate("pembelian", u"Merek", None))
+        self.new_item_check.setText(QCoreApplication.translate("pembelian", u"New Item", None))
         self.unit_label.setText(QCoreApplication.translate("pembelian", u"Unit", None))
         self.unit_combo.setItemText(0, QCoreApplication.translate("pembelian", u"ctn", None))
-        self.unit_combo.setItemText(1, QCoreApplication.translate("pembelian", u"pack", None))
+        self.unit_combo.setItemText(1, QCoreApplication.translate("pembelian", u"bks", None))
         self.unit_combo.setItemText(2, QCoreApplication.translate("pembelian", u"pcs", None))
         self.unit_combo.setItemText(3, QCoreApplication.translate("pembelian", u"Kg", None))
         self.unit_combo.setItemText(4, QCoreApplication.translate("pembelian", u"g", None))

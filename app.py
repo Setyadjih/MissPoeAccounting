@@ -31,9 +31,12 @@ class PembelianWidget(QWidget):
         self.logger = get_logger("excel_automator")
         self.logger.info("Initializing program")
 
+        self.cat_items_dict = {}
+
         # Context menu setup
         self.ui.commit_table.setContextMenuPolicy(Qt.ActionsContextMenu)
         self.del_row_action = QAction(self, text="Delete Table Row")
+
         # noinspection PyUnresolvedReferences
         self.del_row_action.triggered.connect(self.delete_table_row)
         self.ui.commit_table.addAction(self.del_row_action)
@@ -42,6 +45,7 @@ class PembelianWidget(QWidget):
         self.ui.status_bar.setText("Ready for input.")
         self.ui.confirm_button.setDisabled(True)
         self.ui.init_button.setDisabled(True)
+        self.ui.item_line.hide()
 
         # Default test button to hide
         self.ui.test_button.hide()
@@ -90,10 +94,13 @@ class PembelianWidget(QWidget):
         # Hookup buttons
         self.ui.test_button.clicked.connect(self.test_func)
 
+        self.ui.new_item_check.clicked.connect(self.item_input_toggle)
         self.ui.add_vendor_button.clicked.connect(self.add_to_table)
         self.ui.file_browse_button.clicked.connect(self.get_excel_sheet)
         self.ui.confirm_button.clicked.connect(self.confirm_table)
         self.ui.init_button.clicked.connect(self.init_cat_button)
+
+        self.ui.category_combo.currentIndexChanged.connect(self.load_cat_items)
 
         # # FIXME:
         # TESTING PARAMS
@@ -104,6 +111,21 @@ class PembelianWidget(QWidget):
 
         self.ui.confirm_button.setDisabled(True)
         self.ui.init_button.setDisabled(True)
+
+    def load_cat_items(self):
+        self.ui.item_combo.clear()
+        current_cat = self.ui.category_combo.currentText()
+        self.ui.item_combo.addItems(self.cat_items_dict[current_cat])
+
+    def item_input_toggle(self):
+        """Toggle item input style"""
+        if self.ui.new_item_check.isChecked():
+            self.ui.item_combo.hide()
+            self.ui.item_line.show()
+        else:
+            self.ui.item_combo.show()
+            self.ui.item_line.hide()
+            self.ui.item_line.clear()
 
     def test_func(self):
         purchase_book = load_workbook(self.ui.xls_file_browser.text())
@@ -172,9 +194,21 @@ class PembelianWidget(QWidget):
         if not self.ui.xls_file_browser.text():
             return
         purchase_book = load_workbook(self.ui.xls_file_browser.text())
-        for vendor in purchase_book.sheetnames:
+        skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
+        vendor_sheets = [_ for _ in purchase_book.sheetnames if _ not in skip_list]
+        for vendor in vendor_sheets:
             self.ui.vendor_combo.addItem(vendor)
 
+        # populate category selection with item lists
+        for category in self.categories["CATEGORIES"]:
+            cat_items = []
+            for row in purchase_book[category].iter_rows(min_row=3, values_only=True):
+                cat_items.append(row[0])
+
+            self.cat_items_dict[category] = cat_items
+
+        # initial category population
+        self.load_cat_items()
         self.ui.confirm_button.setDisabled(True)
         self.ui.init_button.setDisabled(True)
 
@@ -186,10 +220,8 @@ class PembelianWidget(QWidget):
         self.ui.vendor_combo.clear()
         self.ui.item_line.clear()
         self.ui.qty_spin.clear()
-        self.ui.unit_line.clear()
         self.ui.harga_spin.clear()
         self.ui.isi_spin.clear()
-        self.ui.isi_unit_line.clear()
         self.__set_info("Cleared inputs!", status="done")
 
     def add_to_table(self):
@@ -200,14 +232,13 @@ class PembelianWidget(QWidget):
             or self.ui.qty_spin.value() == 0
             or not self.ui.date_line.text()
             or not self.ui.isi_unit_combo.currentText()
-            or not self.ui.item_line.text()
             or not self.ui.vendor_combo.currentText()
         ):
             self.__set_info("Values cannot be 0!", "fail")
             return
 
         date_text = self.ui.date_line.text()
-        date = datetime.strptime(date_text, "%d/%m/%y")
+        date = datetime.strptime(date_text, "%d-%m-%y")
 
         # Commit input to table
         row_count = self.ui.commit_table.rowCount()
@@ -225,11 +256,15 @@ class PembelianWidget(QWidget):
 
         if not self.ui.merek_line.text():
             self.ui.merek_line.setText("")
+
         merek_data = QTableWidgetItem(self.ui.merek_line.text())
         merek_data.setData(Qt.UserRole, self.ui.merek_line.text())
 
-        item_data = QTableWidgetItem(self.ui.item_line.text())
-        item_data.setData(Qt.UserRole, self.ui.item_line.text())
+        item_text = self.ui.item_combo.currentText()
+        if self.ui.new_item_check.isChecked():
+            item_text = self.ui.item_line.text()
+        item_data = QTableWidgetItem(item_text)
+        item_data.setData(Qt.UserRole, item_text)
 
         qty_data = QTableWidgetItem(self.ui.qty_spin.text())
         qty_data.setData(Qt.UserRole, self.ui.qty_spin.value())
@@ -321,7 +356,9 @@ class PembelianWidget(QWidget):
             except Exception as error:
                 self.logger.error(f"Failed on "
                                   f"{self.ui.commit_table.item(row, 1)}")
-                self.__set_info(f"Failed writing to excel sheet! Reason: {error}", "fail")
+                self.__set_info(
+                    f"Failed writing to excel sheet! Reason: {error}", "fail"
+                )
                 self.logger.error(f"Error: {error}")
                 return
         self.clean_table()
