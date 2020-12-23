@@ -38,17 +38,13 @@ def init_catsheet(file, categories: dict, logger):
         # Once the sheet is settled, start processing
         for row in sheet.iter_rows(min_row=3, max_row=sheet.max_row, values_only=True):
             item = row[1]
-            logger.debug(f"ROW: {row}")
 
             # Early check done_list to skip checking in cat sheet
-            if not item:
-                logger.debug("Skipping empty row")
+            if not item or item in done_set:
+                logger.debug("Skipping item")
                 continue
 
-            if item in done_set:
-                logger.debug("Skipping done item")
-                continue
-
+            logger.debug(f"ROW: {row}")
             logger.info(f"READING: {item}")
 
             # Try to get data from row. If missing data, give defaults
