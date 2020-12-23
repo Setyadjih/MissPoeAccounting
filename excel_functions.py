@@ -7,16 +7,16 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles.borders import Border, Side
 
 # Today as 30-Mar-19
-DATE_FORMAT = "dd/mm/yy"
+DATE_FORMAT = "dd-mmm-yy"
 
 COMMA_FORMAT = "#,##0"
 RP_FORMAT = u'_("Rp"* #,##0_);_("Rp"* (#,##0);_("Rp"* "-"_);_(@_)'
 
 cat_sheets = {"LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging",
-                  "Utensils", "Appliances", "Cleaning"}
+              "Utensils", "Appliances", "Cleaning"}
 
 
-def init_catsheet(file, categories:dict, logger):
+def init_catsheet(file, categories: dict, logger):
     logger = logger if logger else getLogger()
     # Load excel file path
     # Due to openpyxl's structure, we need the data_only=False wb to save
@@ -136,7 +136,7 @@ def write_to_excel(categories: dict, date, file, vendor, merek, item,
     logger.debug(f"last row = {last_row}")
 
     # check for empty row error
-    while not input_vendor[f"B{last_row-1}"].value:
+    while not input_vendor[f"B{last_row - 1}"].value:
         logger.debug("Previous row empty, going up one")
         last_row -= 1
 
@@ -175,7 +175,6 @@ def write_to_excel(categories: dict, date, file, vendor, merek, item,
 
 
 def update_cat(categories, file, item, isi_unit, input_wb, category, logger):
-
     # Append to costing according to category
     try:
         cat_sheet = input_wb[category]
@@ -198,7 +197,7 @@ def update_cat(categories, file, item, isi_unit, input_wb, category, logger):
 
     logger.debug(f"Assigning {item} to {category}")
     # average = "=SUM(VENDOR!A1+VENDOR!B3....)/(number of vendors)
-    # This workbook is to parse data from formulas (SEPERATE FROM INPUT WB)
+    # This workbook is to parse data from formulas (SEPARATE FROM INPUT WB)
     value_wb = openpyxl.load_workbook(file, data_only=True)
     average = calc_totals(categories, value_wb, item, logger)
     cs = cat_sheet.iter_rows(min_row=3, min_col=1, max_col=1, values_only=True)
