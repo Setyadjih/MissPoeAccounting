@@ -34,29 +34,30 @@ def init_catsheet(file, categories: dict, logger):
         sheet: Worksheet = input_wb[sheet_name]
         logger.info(f"Sheet: {sheet}")
 
-        logger.info("Starting processing")
+        logger.info("Starting processing...")
         # Once the sheet is settled, start processing
-        for row in sheet.iter_rows(min_row=3, max_row=sheet.max_row, values_only=True):
-            item = row[1]
-
+        items = next(sheet.iter_cols(min_col=2, max_col=2, min_row=3, values_only=True))
+        for item in items:
             # Early check done_list to skip checking in cat sheet
             if not item or item in done_set:
                 logger.debug("Skipping item")
                 continue
 
+            row = items.index(item) + 3
             logger.debug(f"ROW: {row}")
             logger.info(f"READING: {item}")
 
             # Try to get data from row. If missing data, give defaults
             try:
-                isi_unit = row[8]
+                isi_unit = sheet[f"I{row}"].value
                 if not isi_unit:
-                    isi_unit = row[4]
+                    isi_unit = sheet[f"E{row}"].value
 
             except IndexError:
                 logger.error("Isi error, assigning g")
                 isi_unit = "g"
 
+            # Check for common typos in categories
             try:
                 corrections = {
                     "Utensil": "Utensils",
@@ -66,7 +67,7 @@ def init_catsheet(file, categories: dict, logger):
                     "Stationery": "Stationary",
                     "Appliance": "Appliances"
                 }
-                cat: str = row[10]
+                cat: str = sheet[f"K{row}"].value
                 if not cat:
                     logger.debug("Assigning to default")
                     cat = "Fresh"
@@ -78,34 +79,26 @@ def init_catsheet(file, categories: dict, logger):
                 cat = "Fresh"
 
             logger.debug(f"Category: {cat}")
-            cat_sheet = input_wb[cat]
 
             # Check if item is already in cat sheet
-            for cat_row in cat_sheet.iter_rows(min_row=3, values_only=True):
-                cat_item = cat_row[0]
-                if cat_item == item:
-                    logger.info("Item already in category, skipping")
-                    continue
+            cat_items = next(input_wb[cat].iter_cols(1, 1, values_only=True))
+            if item in cat_items:
+                logger.info("Item already in category, skipping")
+                continue
 
             logger.info(f"Appending {item} to {cat}")
-            update_cat(categories, file, item, isi_unit, input_wb, cat, logger)
+            update_cat(skip_list, file, item, sheet_name, isi_unit, input_wb, cat, logger)
 
             done_set.add(item)
-
     logger.info("All done with init")
-    print("Final outcome: ")
-    for cat in categories["CATEGORIES"]:
-        print(f"{cat}: ")
-        for row in input_wb[cat].iter_rows(values_only=True):
-            print(row)
 
 
-def write_to_excel(categories: dict, date, file, vendor, merek, item,
+def write_to_excel(skips: list, date, file, vendor, merek, item,
                    quantity, unit, cost, isi, isi_unit, category, logger=None):
     """
     Write the given data to the purchasing excel sheet
 
-    :param categories dict
+    :param skips sheets to skip
     :param date: date of purchase
     :param file: file path to excel sheet to edit
     :param vendor: Vendor WS to edit
@@ -167,14 +160,12 @@ def write_to_excel(categories: dict, date, file, vendor, merek, item,
     per_unit_cell = input_vendor.cell(last_row, 9)
     per_unit_cell.number_format = RP_FORMAT
 
-    update_cat(categories, file, item, isi_unit, input_wb, category, logger)
+    update_cat(skips, file, item, vendor, isi_unit, input_wb, category, logger)
 
 
-def update_cat(categories, file, item, isi_unit, input_wb, category, logger):
+def update_cat(skips, file, item, vendor, isi_unit, input_wb, category, logger):
     # Append to costing according to category
-    try:
-        cat_sheet = input_wb[category]
-    except KeyError:
+    if category not in input_wb.sheetnames:
         logger.debug(f"{category} not found, creating")
         input_wb.create_sheet(category)
         cat_sheet: Worksheet = input_wb[category]
@@ -192,95 +183,86 @@ def update_cat(categories, file, item, isi_unit, input_wb, category, logger):
     input_wb.save(file)
 
     logger.debug(f"Assigning {item} to {category}")
-    # average = "=SUM(VENDOR!A1+VENDOR!B3....)/(number of vendors)
-    # This workbook is to parse data from formulas (SEPARATE FROM INPUT WB)
-    value_wb = openpyxl.load_workbook(file, data_only=True)
-    average = calc_totals(categories, value_wb, item, logger)
-    cs = cat_sheet.iter_rows(min_row=3, min_col=1, max_col=1, values_only=True)
 
-    # check if item already in sheet
-    # Row num at three due to Excel sheet format
-    item_exist = False
-    row_num = 3
-
-    # Check for item
-    for row in cs:
-        item_name = row[0]
-        if item == item_name:
-            item_exist = True
-            break
-        row_num += 1
-
-    if item_exist:
-        # update cell data
-        logger.info("Updating CAT entry")
-        price_cell = f"C{row_num}"
-        cat_sheet[price_cell] = average
-
-    if not item_exist:
-        logger.info("Item is new, creating CAT entry")
-        cat_sheet.append(
-            {
-                'A': item,
-                'B': isi_unit,
-                'C': average,
-            }
-        )
-
-    price_cell_obj = cat_sheet.cell(row=row_num, column=3)
-    price_cell_obj.number_format = RP_FORMAT
-
-    value_wb.close()
+    # Handle cat sheet updating
+    update_avg_formula(item, isi_unit, category, vendor, input_wb, skips, logger)
 
     input_wb.save(filename=file)
-    input_wb.close()
     logger.info("Finished writing to workbook")
 
 
-def calc_totals(categories: dict, workbook: Workbook, item_name: str, logger=None):
+def update_avg_formula(item, isi_unit, category, vendor_check, workbook, skips, logger=None):
     """Calculate average price for each item, total quantity, total units
-
-    :param workbook: worksheet to read from
-    :param categories: dictionary of category sheets
-    :param item_name: name of item to check
+    Average formula template:
+    SUM(
+        SUMIF([VENDORSHEET]!B:B, A[ROW], [VENDORSHEET]!J:J),
+        SUMIF([VENDERSHEET]!....
+    )
+    /
+    SUM(
+        COUNTIF([VENDORSHEET]!B:B, A[ROW]),
+        COUNTIF([VENDORSHEET]!....
+    )
+    :param item: name of item to check
+    :param isi_unit: unit of item
+    :param category: item category
+    :param vendor_check: vendor to check
+    :param workbook: workbook to read from
+    :param skips: sheets to avoid
     :param logger: logger pass through
     :return average
     """
+    # Check for item in each ws
+    # for each ws with item, add SUMIF to final formula
     logger = logger if logger else getLogger()
-    logger.info(f"Calculating totals for {item_name}...")
-    row_count = 2
 
-    # Iterating through each worksheet to find all entries of item
-    logger.debug(f"Beginning iteration")
-    price_count = "SUM("
-    entry_count = 0
+    # check if item in list
+    cat_items = next(workbook[category].iter_cols(1, 1, values_only=True))
+    if item in cat_items:
+        row = cat_items.index(item)
+        avg_formula: str = workbook[category][f"C{row}"]
 
-    try:
-        for vendor in workbook.sheetnames:
-            ws = workbook[vendor]
+        if vendor_check in avg_formula:
+            return
+        else:
+            sumif_str = f"SUMIF('{vendor_check}'!B:B, A{row}, '{vendor_check}'!J:J),"
+            countif_str = f"COUNTIF({vendor_check}!B:B, A{row}),"
 
-            # Do not read from category sheets
-            if ws.title in list(categories.keys()):
-                continue
+            # Insert at divisor
+            avg_formula = avg_formula.replace(") /", f"{sumif_str}) /")
 
-            for row in ws.iter_rows(min_row=3, values_only=True):
-                row_count += 1
-                if row[1] == item_name:
-                    logger.debug(f"Found: {ws.title}, ROW: {row_count}")
-                    entry_count += 1
+            # add count to divisor sum
+            avg_formula = avg_formula[:-1] + countif_str + ")"
 
-                    # price/unit is already calculated, add it to running
-                    price_cell = ws.cell(row_count, column=10).coordinate
-                    price_count += f"+'{ws.title}'!{price_cell}"
+            # Rewrite formula back to wb
+            workbook[category][f"C{row}"] = avg_formula
 
-            # reset row count for next ws
-            row_count = 2
+    else:
+        logger.info("Item is new, creating CAT entry")
+        workbook[category].append(
+            {
+                'A': item,
+                'B': isi_unit,
+            }
+        )
+        row = workbook[category].max_row
+        # Iterating through each worksheet to find all vendors with item
+        logger.debug(f"Beginning iteration")
+        price_count = ""
+        entry_count = ""
 
-        # Close SUM brackets
-        price_count += ")"
-        avg_formula = f'={price_count}/{entry_count}'
-        logger.info(f"returning {avg_formula}")
+        try:
+            vendors = [_ for _ in workbook.sheetnames if _ not in skips]
+            for vendor in vendors:
+                items = next(workbook[vendor].iter_cols(2, 2, values_only=True))
+                if item in items:
+                    price_count += f"SUMIF('{vendor}'!B:B, A{row}, '{vendor}'!J:J),"
+                    entry_count += f"COUNTIF('{vendor}'!B:B, A{row}),"
 
-        return avg_formula
-    except Exception as e:
-        logger.error(f"ERROR: {e}")
+            avg_formula = f"=SUM({price_count})/SUM({entry_count})"
+            workbook[category][f"C{row}"] = avg_formula
+
+            price_cell_obj = workbook[category].cell(row=row, column=3)
+            price_cell_obj.number_format = RP_FORMAT
+        except Exception as e:
+            logger.error(f"ERROR: {e}")

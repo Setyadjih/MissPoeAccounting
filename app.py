@@ -154,7 +154,7 @@ class PembelianWidget(QWidget):
         )
         warning.setWindowTitle("Are you sure?")
 
-        # I don't really understand the pipe operator, but it works
+        # BITWISE OR operator to combine the button options
         warning.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
 
         # result is an int, compare to qmessage status works
@@ -336,8 +336,9 @@ class PembelianWidget(QWidget):
                     return
 
                 # Execute table to excel
+                skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
                 write_to_excel(
-                    self.categories,
+                    skip_list,
                     date,
                     file,
                     vendor,
