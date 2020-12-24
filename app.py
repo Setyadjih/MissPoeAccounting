@@ -238,7 +238,7 @@ class PembelianWidget(QWidget):
             return
 
         date_text = self.ui.date_line.text()
-        date = datetime.strptime(date_text, "%d-%m-%y")
+        date = datetime.strptime(date_text, "%d-%b-%y")
 
         # Commit input to table
         row_count = self.ui.commit_table.rowCount()

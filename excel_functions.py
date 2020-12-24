@@ -2,7 +2,6 @@ import openpyxl
 
 from logging import getLogger
 
-from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles.borders import Border, Side
 
@@ -219,12 +218,15 @@ def update_avg_formula(item, isi_unit, category, vendor_check, workbook, skips, 
     # check if item in list
     cat_items = next(workbook[category].iter_cols(1, 1, values_only=True))
     if item in cat_items:
+        logger.debug("Item exists, checking vendor in formula")
         row = cat_items.index(item)
-        avg_formula: str = workbook[category][f"C{row}"]
+        avg_formula: str = workbook[category][f"C{row}"].value
 
         if vendor_check in avg_formula:
+            logger.debug("Vendor in formula, returning")
             return
         else:
+            logger.debug("Vendor is new, adding to formula")
             sumif_str = f"SUMIF('{vendor_check}'!B:B, A{row}, '{vendor_check}'!J:J),"
             countif_str = f"COUNTIF({vendor_check}!B:B, A{row}),"
 
@@ -238,7 +240,7 @@ def update_avg_formula(item, isi_unit, category, vendor_check, workbook, skips, 
             workbook[category][f"C{row}"] = avg_formula
 
     else:
-        logger.info("Item is new, creating CAT entry")
+        logger.info(f"Item is new, creating {category} entry")
         workbook[category].append(
             {
                 'A': item,
