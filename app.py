@@ -115,7 +115,8 @@ class PembelianWidget(QWidget):
     def load_cat_items(self):
         self.ui.item_combo.clear()
         current_cat = self.ui.category_combo.currentText()
-        self.ui.item_combo.addItems(self.cat_items_dict[current_cat])
+        sorted_list = sorted(self.cat_items_dict[current_cat])
+        self.ui.item_combo.addItems(sorted_list)
 
     def item_input_toggle(self):
         """Toggle item input style"""

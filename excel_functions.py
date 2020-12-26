@@ -122,12 +122,6 @@ def write_to_excel(skips: list, date, file, vendor, merek, item,
 
     last_row = input_vendor.max_row + 1
     logger.debug(f"last row = {last_row}")
-
-    # check for empty row error
-    while not input_vendor[f"B{last_row - 1}"].value:
-        logger.debug("Previous row empty, going up one")
-        last_row -= 1
-
     logger.debug(f"Appending item data")
 
     input_vendor[f"A{last_row}"] = date
