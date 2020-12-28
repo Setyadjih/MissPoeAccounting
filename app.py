@@ -14,7 +14,7 @@ from PySide2.QtWidgets import (
 from PySide2.QtCore import Qt
 from openpyxl import load_workbook
 
-from utils import get_logger
+from utils import get_logger, get_file_handler
 from resources.pembelian_ui_ss import Ui_pembelian
 from excel_functions import write_to_excel, init_catsheet
 import constants
@@ -180,9 +180,8 @@ class PembelianWidget(QWidget):
     def get_excel_sheet(self):
         """Load Purchase Excelsheet and get vendors"""
         try:
-            self.ui.xls_file_browser.setText(
-                QFileDialog.getOpenFileName(filter="Excel sheets (*.xlsx)")[0]
-            )
+            file_dir = QFileDialog.getOpenFileName(filter="Excel sheets (*.xlsx)")[0]
+            self.ui.xls_file_browser.setText(file_dir)
         except KeyError as error:
             self.__set_info(f"Failed to pick sheet! Vendor doesn't exist.", "fail")
             self.logger.error(error)
@@ -194,7 +193,8 @@ class PembelianWidget(QWidget):
 
         if not self.ui.xls_file_browser.text():
             return
-        purchase_book = load_workbook(self.ui.xls_file_browser.text())
+
+        purchase_book = load_workbook(file_dir)
         skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
         vendor_sheets = [_ for _ in purchase_book.sheetnames if _ not in skip_list]
         for vendor in vendor_sheets:
@@ -216,6 +216,11 @@ class PembelianWidget(QWidget):
         if self.ui.xls_file_browser.text():
             self.ui.confirm_button.setEnabled(True)
             self.ui.init_button.setEnabled(True)
+
+            # Add easy to access log with username
+            log_dir = Path(file_dir).parent.joinpath("_LOG").as_posix()
+            self.logger.addHandler(get_file_handler("excel_automator", log_dir))
+            self.logger.debug("Init user logging")
 
     def clear_inputs(self):
         self.ui.vendor_combo.clear()

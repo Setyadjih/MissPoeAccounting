@@ -222,7 +222,7 @@ def update_avg_formula(item, isi_unit, category, vendor_check, workbook, skips, 
         else:
             logger.debug("Vendor is new, adding to formula")
             sumif_str = f"SUMIF('{vendor_check}'!B:B, A{row}, '{vendor_check}'!J:J),"
-            countif_str = f"COUNTIF({vendor_check}!B:B, A{row}),"
+            countif_str = f"COUNTIF('{vendor_check}'!B:B, A{row}),"
 
             # Insert at divisor
             avg_formula = avg_formula.replace(") /", f"{sumif_str}) /")
@@ -249,12 +249,14 @@ def update_avg_formula(item, isi_unit, category, vendor_check, workbook, skips, 
 
         try:
             vendors = [_ for _ in workbook.sheetnames if _ not in skips]
+            # Check each vendor for item
             for vendor in vendors:
                 items = next(workbook[vendor].iter_cols(2, 2, values_only=True))
                 if item in items:
                     price_count += f"SUMIF('{vendor}'!B:B, A{row}, '{vendor}'!J:J),"
                     entry_count += f"COUNTIF('{vendor}'!B:B, A{row}),"
 
+            # Combine average formula and apply to workbook
             avg_formula = f"=SUM({price_count})/SUM({entry_count})"
             workbook[category][f"C{row}"] = avg_formula
 

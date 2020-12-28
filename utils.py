@@ -3,6 +3,7 @@ import sys
 import os
 import tempfile
 import logging
+from getpass import getuser
 
 
 LOGGER_FORMAT = '%(asctime)s - ' \
@@ -21,7 +22,7 @@ def get_console_handler():
     return console_handler
 
 
-def get_file_handler(file_name):
+def get_file_handler(file_name, log_dir=None):
     """Get the file log handler
 
     :rtype: logging.StreamHandler
@@ -29,12 +30,20 @@ def get_file_handler(file_name):
     # set log path to temp location
     # this path resolve to something like this:
     # C:\Users\<USER_NAME>\AppData\Local\Temp\_LOG
+    # file_dir for custom path
     log_temp_location = os.path.join(tempfile.gettempdir(), '_LOG')
+    if log_dir:
+        log_temp_location = log_dir
+        print(f"log_dir: {log_dir}")
     if not os.path.exists(log_temp_location):
         os.makedirs(log_temp_location)
 
     today = str(datetime.date.today())
     log_file = os.path.join(log_temp_location, f'{file_name}_{today}.log')
+    if log_dir:
+        log_file = os.path.join(
+            log_temp_location, f'{getuser()}_{file_name}_{today}.log'
+        )
 
     file_handler = logging.FileHandler(log_file)
     file_handler.setFormatter(FORMATTER)
