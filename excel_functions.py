@@ -22,6 +22,12 @@ def init_catsheet(file, categories: dict, logger):
     # formula
     input_wb = openpyxl.load_workbook(file, data_only=False)
 
+    # Clear out all category sheets, leaving the header only
+    for cat in categories["CATEGORIES"]:
+        category_sheet = input_wb[cat]
+        max_row = category_sheet.max_row
+        category_sheet.delete_rows(3, max_row)
+
     # default dict
     done_set = {"None", " "}
     skip_list = categories["CATEGORIES"] + categories["MISC"]
@@ -213,7 +219,7 @@ def update_avg_formula(item, isi_unit, category, vendor_check, workbook, skips, 
     cat_items = next(workbook[category].iter_cols(1, 1, values_only=True))
     if item in cat_items:
         logger.debug("Item exists, checking vendor in formula")
-        row = cat_items.index(item)
+        row = cat_items.index(item) + 1 # compensate for 1 based index
         avg_formula: str = workbook[category][f"C{row}"].value
 
         if vendor_check in avg_formula:
