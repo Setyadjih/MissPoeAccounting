@@ -102,11 +102,7 @@ class PembelianWidget(QWidget):
 
         self.ui.category_combo.currentIndexChanged.connect(self.load_cat_items)
 
-        # # FIXME:
-        # TESTING PARAMS
-        # self.ui.xls_file_browser.setText(
-        #     "D:\Miss Poe\Costings\_data\Pembelian 2020_TESTING_CLEANED.xlsx"
-        # )
+        # TEST BUTTON ENABLE OR DISABLE
         # self.ui.test_button.show()
 
         self.ui.confirm_button.setDisabled(True)
@@ -129,9 +125,13 @@ class PembelianWidget(QWidget):
             self.ui.item_line.clear()
 
     def test_func(self):
-        purchase_book = load_workbook(self.ui.xls_file_browser.text())
-        for vendor in purchase_book.sheetnames:
-            self.ui.vendor_combo.addItem(vendor)
+        """Clear out category sheets"""
+        input_wb = load_workbook(self.ui.xls_file_browser.text(), data_only=False)
+        for cat in self.categories["CATEGORIES"]:
+            category_sheet = input_wb[cat]
+            max_row = category_sheet.max_row
+            category_sheet.delete_rows(3, max_row)
+        input_wb.save(self.ui.xls_file_browser.text())
 
     def make_backup(self):
         # Create a backup copy just in case
@@ -150,8 +150,7 @@ class PembelianWidget(QWidget):
         warning.setIcon(QMessageBox.Warning)
         warning.setText(
             "Initializing the category data can take a long time, are you sure"
-            " you want to do this?\n Please make sure to clear out the "
-            "category sheets before hand."
+            " you want to do this?\n The category sheets will be cleared out."
         )
         warning.setWindowTitle("Are you sure?")
 
