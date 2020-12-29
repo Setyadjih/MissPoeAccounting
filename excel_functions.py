@@ -156,7 +156,7 @@ def write_to_excel(skips: list, date, file, vendor, merek, item,
     isi_cell = input_vendor.cell(last_row, 8)
     isi_cell.number_format = COMMA_FORMAT
 
-    per_unit_cell = input_vendor.cell(last_row, 9)
+    per_unit_cell = input_vendor.cell(last_row, 10)
     per_unit_cell.number_format = RP_FORMAT
 
     update_cat(skips, file, item, vendor, isi_unit, input_wb, category, logger)
