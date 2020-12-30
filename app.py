@@ -18,32 +18,7 @@ from utils import get_logger, get_file_handler
 from resources.pembelian_ui_ss import Ui_pembelian
 from excel_functions import write_to_excel, init_catsheet
 import constants
-from constants import CAT_REF
-
-
-class ExcelItem:
-    """Basic class to hold item data"""
-    def __init__(
-        self,
-        name=None,
-        vendor=None,
-        brand=None,
-        quantity=None,
-        unit=None,
-        cost=None,
-        isi=None,
-        isi_unit=None,
-        category=None
-    ):
-        self.name = name
-        self.vendor = vendor
-        self.brand = brand
-        self.quantity = quantity
-        self.unit = unit
-        self.cost = cost
-        self.isi = isi
-        self.isi_unit = isi_unit,
-        self.category = category
+from constants import CAT_REF, ExcelItem
 
 
 # noinspection SpellCheckingInspection

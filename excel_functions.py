@@ -5,7 +5,7 @@ from logging import getLogger
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles.borders import Border, Side
 
-from app import ExcelItem
+from constants import ExcelItem
 
 # Today as 30-Mar-19
 DATE_FORMAT = "dd-mmm-yy"

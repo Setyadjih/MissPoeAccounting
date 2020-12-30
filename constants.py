@@ -18,3 +18,28 @@ Cleaning
 Stationary
 Advertising
 """
+
+
+class ExcelItem:
+    """Basic class to hold item data"""
+    def __init__(
+        self,
+        name=None,
+        vendor=None,
+        brand=None,
+        quantity=None,
+        unit=None,
+        cost=None,
+        isi=None,
+        isi_unit=None,
+        category=None
+    ):
+        self.name = name
+        self.vendor = vendor
+        self.brand = brand
+        self.quantity = quantity
+        self.unit = unit
+        self.cost = cost
+        self.isi = isi
+        self.isi_unit = isi_unit,
+        self.category = category
