@@ -21,6 +21,31 @@ import constants
 from constants import CAT_REF
 
 
+class ExcelItem:
+    """Basic class to hold item data"""
+    def __init__(
+        self,
+        name=None,
+        vendor=None,
+        brand=None,
+        quantity=None,
+        unit=None,
+        cost=None,
+        isi=None,
+        isi_unit=None,
+        category=None
+    ):
+        self.name = name
+        self.vendor = vendor
+        self.brand = brand
+        self.quantity = quantity
+        self.unit = unit
+        self.cost = cost
+        self.isi = isi
+        self.isi_unit = isi_unit,
+        self.category = category
+
+
 # noinspection SpellCheckingInspection
 class PembelianWidget(QWidget):
     def __init__(self, parent=None):
@@ -326,37 +351,35 @@ class PembelianWidget(QWidget):
             try:
                 # Get values from item ranges
                 date = self.ui.commit_table.item(row, 0).data(Qt.UserRole)
-                item = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
+                name = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
                 vendor = self.ui.commit_table.item(row, 2).data(Qt.UserRole)
-                merek = self.ui.commit_table.item(row, 3).data(Qt.UserRole)
+                brand = self.ui.commit_table.item(row, 3).data(Qt.UserRole)
                 quantity = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
                 unit = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
-                harga = self.ui.commit_table.item(row, 6).data(Qt.UserRole)
+                cost = self.ui.commit_table.item(row, 6).data(Qt.UserRole)
                 isi = self.ui.commit_table.item(row, 8).data(Qt.UserRole)
                 isi_unit = self.ui.commit_table.item(row, 9).data(Qt.UserRole)
                 category = self.ui.commit_table.item(row, 11).data(Qt.UserRole)
 
-                if not item:
+                if not name:
                     self.__set_info("item is empty")
                     return
 
-                # Execute table to excel
-                skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
-                write_to_excel(
-                    skip_list,
-                    date,
-                    file,
+                excel_item = ExcelItem(
+                    name,
                     vendor,
-                    merek,
-                    item,
+                    brand,
                     quantity,
                     unit,
-                    harga,
+                    cost,
                     isi,
                     isi_unit,
-                    category,
-                    self.logger,
+                    category
                 )
+
+                # Execute table to excel
+                skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
+                write_to_excel(skip_list, date, file, excel_item, self.logger)
 
                 self.__set_info("Writing to Excel sheet...")
             except Exception as error:
