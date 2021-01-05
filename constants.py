@@ -1,6 +1,6 @@
 from datetime import date
 
-APP_VERSION = 'v0.2.05'
+APP_VERSION = 'v0.2.06'
 DATE = date.today().strftime("%d-%b-%y")
 
 CAT_REF = "excel_categories.txt"
@@ -41,5 +41,5 @@ class ExcelItem:
         self.unit = unit
         self.cost = cost
         self.isi = isi
-        self.isi_unit = isi_unit,
+        self.isi_unit = isi_unit
         self.category = category

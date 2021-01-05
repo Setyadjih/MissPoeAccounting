@@ -1,0 +1,1 @@
+pyside2-rcc resources\resources.qrc > resources\resources_rc.py

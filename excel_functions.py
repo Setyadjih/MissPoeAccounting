@@ -96,8 +96,9 @@ def init_catsheet(file, categories: dict, logger):
             excel_item = ExcelItem(
                 name=item, vendor=sheet_name, isi_unit=isi_unit, category=categ
             )
-            update_cat(skip_list, file, excel_item, input_wb, logger)
+            update_cat(skip_list, excel_item, input_wb, logger)
             done_set.add(item)
+    input_wb.save(file)
     logger.info("All done with init")
 
 
@@ -157,10 +158,11 @@ def write_to_excel(skips, date, file, excel_item, logger=None):
     per_unit_cell = input_vendor.cell(last_row, 10)
     per_unit_cell.number_format = RP_FORMAT
 
-    update_cat(skips, file, excel_item, input_wb, logger)
+    update_cat(skips, excel_item, input_wb, logger)
+    input_wb.save(file)
 
 
-def update_cat(skips, file, excel_item, input_wb, logger):
+def update_cat(skips, excel_item, input_wb, logger):
     """ Update item entry in category sheet
 
     :param skips: sheets to skip
@@ -186,13 +188,9 @@ def update_cat(skips, file, excel_item, input_wb, logger):
             cell = cat_sheet.cell(row=2, column=i)
             cell.border = Border(bottom=Side(style='thick'))
 
-    input_wb.save(file)
-    logger.debug(f"Assigning {excel_item.name} to {category}")
-
     # Handle cat sheet updating
+    logger.debug(f"Assigning {excel_item.name} to {category}")
     update_avg_formula(excel_item, input_wb, skips, logger)
-
-    input_wb.save(filename=file)
 
 
 def update_avg_formula(excel_item, workbook, skips, logger=None):
@@ -228,46 +226,61 @@ def update_avg_formula(excel_item, workbook, skips, logger=None):
         # compensate for 1 based index
         row = cat_items.index(excel_item.name) + 1
         avg_formula: str = workbook[category][f"C{row}"].value
+        if not avg_formula:
+            logger.debug("Item exists, but missing formula; Initializing...")
+            init_formula(excel_item, workbook, skips, logger, row)
 
-        if vendor_check in avg_formula:
-            logger.debug("Vendor in formula, returning")
-            return
+        elif vendor_check in avg_formula:
+            logger.debug("Vendor already in formula")
+
         else:
             logger.debug("Vendor is new, adding to formula")
             sumif_str = f"SUMIF('{vendor_check}'!B:B, A{row}, '{vendor_check}'!J:J),"
             countif_str = f"COUNTIF('{vendor_check}'!B:B, A{row}),"
 
-            # Insert at divisor
-            # add count to divisor sum
+            # add sumif to sum of dividend
+            # add countif to sum of divisor
             # Rewrite formula back to wb
             avg_formula = avg_formula.replace(") /", f"{sumif_str}) /")
             avg_formula = avg_formula[:-1] + countif_str + ")"
             workbook[category][f"C{row}"] = avg_formula
 
     else:
+        logger.debug("Item is new, adding and initializing formula")
+        init_formula(excel_item, workbook, skips, logger)
+
+
+def init_formula(excel_item, workbook, skips, logger=None, row=None):
+    """Generate full average formula. Get the row as a check in the book."""
+    logger = logger if logger else getLogger()
+    category = excel_item.category
+
+    if not row:
         logger.info(f"Item is new, creating {category} entry")
         workbook[category].append({'A': excel_item.name, 'B': excel_item.isi_unit})
         row = workbook[category].max_row
+    else:
+        logger.info("Item exists, creating average formula...")
 
-        # Iterating through each worksheet to find all vendors with item
-        logger.debug(f"Beginning iteration")
-        price_count = ""
-        entry_count = ""
+    # Iterating through each worksheet to find all vendors with item
+    logger.debug(f"Beginning iteration")
+    price_count = ""
+    entry_count = ""
 
-        try:
-            vendors = [_ for _ in workbook.sheetnames if _ not in skips]
-            # Check each vendor for item
-            for vendor in vendors:
-                items = next(workbook[vendor].iter_cols(2, 2, values_only=True))
-                if excel_item.name in items:
-                    price_count += f"SUMIF('{vendor}'!B:B, A{row}, '{vendor}'!J:J),"
-                    entry_count += f"COUNTIF('{vendor}'!B:B, A{row}),"
+    try:
+        vendors = [_ for _ in workbook.sheetnames if _ not in skips]
+        # Check each vendor for item
+        for vendor in vendors:
+            items = next(workbook[vendor].iter_cols(2, 2, values_only=True))
+            if excel_item.name in items:
+                price_count += f"SUMIF('{vendor}'!B:B, A{row}, '{vendor}'!J:J),"
+                entry_count += f"COUNTIF('{vendor}'!B:B, A{row}),"
 
-            # Combine average formula and apply to workbook
-            avg_formula = f"=SUM({price_count})/SUM({entry_count})"
-            workbook[category][f"C{row}"] = avg_formula
+        # Combine average formula and apply to workbook
+        avg_formula = f"=SUM({price_count})/SUM({entry_count})"
+        workbook[category][f"C{row}"] = avg_formula
 
-            price_cell_obj = workbook[category].cell(row=row, column=3)
-            price_cell_obj.number_format = RP_FORMAT
-        except Exception as e:
-            logger.error(f"ERROR: {e}")
+        price_cell_obj = workbook[category].cell(row=row, column=3)
+        price_cell_obj.number_format = RP_FORMAT
+    except Exception as e:
+        logger.error(f"ERROR: {e}")

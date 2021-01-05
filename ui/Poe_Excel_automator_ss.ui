@@ -19,6 +19,10 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../resources/resources.qrc">
+    <normaloff>:/Icon/MissPoeVectorExcel.ico</normaloff>:/Icon/MissPoeVectorExcel.ico</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">QWidget#pembelian{	
 background-color: qlineargradient(spread:pad, x1:0.5, y1:1, x2:0.5, y2:0, stop:0 #b8dbb4, stop:.9 rgba(255, 255, 255, 255));
@@ -823,6 +827,8 @@ background-color:#d7ffd9;
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resources/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

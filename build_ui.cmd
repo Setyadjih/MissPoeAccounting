@@ -1,1 +1,2 @@
 pyside2-uic ui\Poe_Excel_automator_ss.ui > resources\pembelian_ui_ss.py
+powershell -Command "(gc resources\pembelian_ui_ss.py) -replace 'import resources_rc', 'from . import resources_rc' | Out-File -encoding ASCII resources\pembelian_ui_ss.py"

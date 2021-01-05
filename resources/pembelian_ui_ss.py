@@ -15,6 +15,7 @@ from PySide2.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
     QPixmap, QRadialGradient)
 from PySide2.QtWidgets import *
 
+from . import resources_rc
 
 class Ui_pembelian(object):
     def setupUi(self, pembelian):
@@ -22,6 +23,9 @@ class Ui_pembelian(object):
             pembelian.setObjectName(u"pembelian")
         pembelian.resize(1325, 436)
         pembelian.setMinimumSize(QSize(1325, 0))
+        icon = QIcon()
+        icon.addFile(u":/Icon/MissPoeVectorExcel.ico", QSize(), QIcon.Normal, QIcon.Off)
+        pembelian.setWindowIcon(icon)
         pembelian.setStyleSheet(u"QWidget#pembelian{	\n"
 "background-color: qlineargradient(spread:pad, x1:0.5, y1:1, x2:0.5, y2:0, stop:0 #b8dbb4, stop:.9 rgba(255, 255, 255, 255));\n"
 "}\n"

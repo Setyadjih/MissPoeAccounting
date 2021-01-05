@@ -17,8 +17,7 @@ from openpyxl import load_workbook
 from utils import get_logger, get_file_handler
 from resources.pembelian_ui_ss import Ui_pembelian
 from excel_functions import write_to_excel, init_catsheet
-import constants
-from constants import CAT_REF, ExcelItem
+from constants import APP_VERSION, DATE, DEFAULT_CATEGORIES, CAT_REF, ExcelItem
 
 
 # noinspection SpellCheckingInspection
@@ -27,7 +26,7 @@ class PembelianWidget(QWidget):
         super(PembelianWidget, self).__init__(parent)
         self.ui = Ui_pembelian()
         self.ui.setupUi(self)
-        self.ui.date_line.setText(constants.DATE)
+        self.ui.date_line.setText(DATE)
         self.logger = get_logger("excel_automator")
         self.logger.info("Initializing program")
 
@@ -41,7 +40,7 @@ class PembelianWidget(QWidget):
         self.del_row_action.triggered.connect(self.delete_table_row)
         self.ui.commit_table.addAction(self.del_row_action)
 
-        self.setWindowTitle(f"Poe Excel Automator {constants.APP_VERSION}")
+        self.setWindowTitle(f"Poe Excel Automator {APP_VERSION}")
         self.ui.status_bar.setText("Ready for input.")
         self.ui.confirm_button.setDisabled(True)
         self.ui.init_button.setDisabled(True)
@@ -57,7 +56,7 @@ class PembelianWidget(QWidget):
         if not Path(CAT_REF).exists():
             self.logger.info("Creating new cat ref file")
             with open(CAT_REF, "w") as new_file:
-                new_file.write(constants.DEFAULT_CATEGORIES)
+                new_file.write(DEFAULT_CATEGORIES)
             message = QMessageBox()
             message.setWindowTitle("Default categories file created")
             message.setText(f"A default category list was created. Please "
@@ -203,7 +202,8 @@ class PembelianWidget(QWidget):
         for category in self.categories["CATEGORIES"]:
             cat_items = []
             for row in purchase_book[category].iter_rows(min_row=3, values_only=True):
-                cat_items.append(row[0])
+                if row[0]:
+                    cat_items.append(row[0])
 
             self.cat_items_dict[category] = cat_items
 
@@ -366,7 +366,7 @@ class PembelianWidget(QWidget):
                 self.logger.error(f"Error: {error}")
                 return
         self.clean_table()
-
+        self.logger.debug("Finished writing")
         self.__set_info("All done writing!", status="done")
 
     def clean_table(self):
