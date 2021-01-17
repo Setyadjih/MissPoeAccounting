@@ -26,6 +26,7 @@ def init_catsheet(file, categories: dict, logger):
 
     # Clear out all category sheets, leaving the header only
     for category in categories["CATEGORIES"]:
+        logger.debug(f"Clearing {category}")
         category_sheet = input_wb[category]
         max_row = category_sheet.max_row
         category_sheet.delete_rows(3, max_row)
@@ -96,7 +97,7 @@ def init_catsheet(file, categories: dict, logger):
             excel_item = ExcelItem(
                 name=item, vendor=sheet_name, isi_unit=isi_unit, category=categ
             )
-            update_cat(skip_list, excel_item, input_wb, logger)
+            update_cat_avg(excel_item, input_wb, skip_list, logger)
             done_set.add(item)
     input_wb.save(file)
     logger.info("All done with init")
@@ -121,79 +122,54 @@ def write_to_excel(skips, date, file, excel_item, logger=None):
 
     # Create vendor sheet if new
     input_vendor = input_wb[excel_item.vendor]
-    last_row = input_vendor.max_row + 1
+    input_row = input_vendor.max_row + 1
 
     # iterate backwards until last_row is after a row with data
-    while not input_vendor[f"B{last_row-1}"].value:
-        last_row -= 1
+    while not input_vendor[f"B{input_row-1}"].value:
+        input_row -= 1
 
-    logger.debug(f"max row = {input_vendor.max_row}, last row = {last_row}")
+    # Hard coded minimum to not clash with merged cells:
+    if input_row < 3:
+        input_row = 3
+
+    logger.debug(f"max row = {input_vendor.max_row}, input row = {input_row}")
     logger.debug(f"Appending item data")
-    input_vendor[f"A{last_row}"] = date
-    input_vendor[f"B{last_row}"] = excel_item.name
-    input_vendor[f"C{last_row}"] = excel_item.brand
-    input_vendor[f"D{last_row}"] = excel_item.quantity
-    input_vendor[f"E{last_row}"] = excel_item.unit
-    input_vendor[f"F{last_row}"] = excel_item.cost
-    input_vendor[f"G{last_row}"] = f'=D{last_row}*F{last_row}'
-    input_vendor[f"H{last_row}"] = excel_item.isi
-    input_vendor[f"I{last_row}"] = excel_item.isi_unit
-    input_vendor[f"J{last_row}"] = f"=G{last_row}/H{last_row}"
-    input_vendor[f"K{last_row}"] = excel_item.category
+    input_vendor[f"A{input_row}"] = date
+    input_vendor[f"B{input_row}"] = excel_item.name
+    input_vendor[f"C{input_row}"] = excel_item.brand
+    input_vendor[f"D{input_row}"] = excel_item.quantity
+    input_vendor[f"E{input_row}"] = excel_item.unit
+    input_vendor[f"F{input_row}"] = excel_item.cost
+    input_vendor[f"G{input_row}"] = f'=D{input_row}*F{input_row}'
+    input_vendor[f"H{input_row}"] = excel_item.isi
+    input_vendor[f"I{input_row}"] = excel_item.isi_unit
+    input_vendor[f"J{input_row}"] = f"=G{input_row}/H{input_row}"
+    input_vendor[f"K{input_row}"] = excel_item.category
 
     # format cells for Rupiah
     logger.debug("Assigning format strings")
-    date_cell = input_vendor.cell(last_row, 1)
+    date_cell = input_vendor.cell(input_row, 1)
     date_cell.number_format = DATE_FORMAT
 
-    cost_cell = input_vendor.cell(last_row, 6)
+    cost_cell = input_vendor.cell(input_row, 6)
     cost_cell.number_format = RP_FORMAT
 
-    total_cell = input_vendor.cell(last_row, 7)
+    total_cell = input_vendor.cell(input_row, 7)
     total_cell.number_format = RP_FORMAT
 
-    isi_cell = input_vendor.cell(last_row, 8)
+    isi_cell = input_vendor.cell(input_row, 8)
     isi_cell.number_format = COMMA_FORMAT
 
-    per_unit_cell = input_vendor.cell(last_row, 10)
+    per_unit_cell = input_vendor.cell(input_row, 10)
     per_unit_cell.number_format = RP_FORMAT
 
-    update_cat(skips, excel_item, input_wb, logger)
+    logger.debug(f"Assigning {excel_item.name} to {excel_item.category}")
+    update_cat_avg(excel_item, input_wb, skips, logger)
+
     input_wb.save(file)
 
 
-def update_cat(skips, excel_item, input_wb, logger):
-    """ Update item entry in category sheet
-
-    :param skips: sheets to skip
-    :param str file: file path
-    :param excel_item: ExcelItem for item data
-    :param input_wb: Workbook to save and input form
-    :param logger: logger passthrough
-    """
-    # Append to costing according to category
-    category = excel_item.category
-
-    if category not in input_wb.sheetnames:
-        logger.debug(f"{category} not found, creating")
-        input_wb.create_sheet(category)
-        cat_sheet: Worksheet = input_wb[category]
-        cat_sheet['A1'] = category.upper()
-        cat_sheet['A2'] = 'MATERIAL'
-        cat_sheet['B2'] = 'UNIT'
-        cat_sheet['C2'] = 'PRICE'
-
-        # Apply style to docs
-        for i in range(1, 4):
-            cell = cat_sheet.cell(row=2, column=i)
-            cell.border = Border(bottom=Side(style='thick'))
-
-    # Handle cat sheet updating
-    logger.debug(f"Assigning {excel_item.name} to {category}")
-    update_avg_formula(excel_item, input_wb, skips, logger)
-
-
-def update_avg_formula(excel_item, workbook, skips, logger=None):
+def update_cat_avg(excel_item, workbook, skips, logger=None):
     """Calculate average price for each item, total quantity, total units
     Average formula template:
     SUM(
@@ -259,8 +235,12 @@ def init_formula(excel_item, workbook, skips, logger=None, row=None):
         logger.info(f"Item is new, creating {category} entry")
         workbook[category].append({'A': excel_item.name, 'B': excel_item.isi_unit})
         row = workbook[category].max_row
+
     else:
         logger.info("Item exists, creating average formula...")
+
+    if row < 3:
+        row = 3
 
     # Iterating through each worksheet to find all vendors with item
     logger.debug(f"Beginning iteration")
