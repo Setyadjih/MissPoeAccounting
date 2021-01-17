@@ -26,10 +26,11 @@ def init_catsheet(file, categories: dict, logger):
 
     # Clear out all category sheets, leaving the header only
     for category in categories["CATEGORIES"]:
-        logger.debug(f"Clearing {category}")
         category_sheet = input_wb[category]
-        max_row = category_sheet.max_row
+        max_row = max(category_sheet.max_row, 3)
+        logger.debug(f"Clearing {category} from 3 to {max_row}")
         category_sheet.delete_rows(3, max_row)
+    input_wb.save(file)
 
     # default dict
     done_set = {"None", " "}
@@ -217,9 +218,9 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
             # add sumif to sum of dividend
             # add countif to sum of divisor
             # Rewrite formula back to wb
-            avg_formula = avg_formula.replace(") /", f"{sumif_str}) /")
-            avg_formula = avg_formula[:-1] + countif_str + ")"
-            workbook[category][f"C{row}"] = avg_formula
+            sumif_formula = avg_formula.replace(")/", f"{sumif_str}) /")
+            full_avg_formula = sumif_formula[:-1] + countif_str + ")"
+            workbook[category][f"C{row}"] = full_avg_formula
 
     else:
         logger.debug("Item is new, adding and initializing formula")
