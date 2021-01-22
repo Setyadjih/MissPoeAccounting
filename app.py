@@ -42,8 +42,6 @@ class PembelianWidget(QWidget):
 
         self.setWindowTitle(f"Poe Excel Automator {APP_VERSION}")
         self.ui.status_bar.setText("Ready for input.")
-        self.ui.confirm_button.setDisabled(True)
-        self.ui.init_button.setDisabled(True)
         self.ui.item_line.hide()
 
         # Default test button to hide
@@ -104,9 +102,6 @@ class PembelianWidget(QWidget):
         # TEST BUTTON ENABLE OR DISABLE
         # self.ui.test_button.show()
 
-        self.ui.confirm_button.setDisabled(True)
-        self.ui.init_button.setDisabled(True)
-
     def load_cat_items(self):
         self.ui.item_combo.clear()
         current_cat = self.ui.category_combo.currentText()
@@ -141,6 +136,9 @@ class PembelianWidget(QWidget):
 
     def init_cat_button(self):
         file = self.ui.xls_file_browser.text()
+        if not file:
+            self.__set_info("No file to write to!", "fail")
+            return
 
         self.make_backup()
 
@@ -179,7 +177,6 @@ class PembelianWidget(QWidget):
         """Load Purchase Excelsheet and get vendors"""
         try:
             file_dir = QFileDialog.getOpenFileName(filter="Excel sheets (*.xlsx)")[0]
-            self.ui.xls_file_browser.setText(file_dir)
         except KeyError as error:
             self.__set_info(f"Failed to pick sheet! Vendor doesn't exist.", "fail")
             self.logger.error(error)
@@ -189,9 +186,13 @@ class PembelianWidget(QWidget):
             self.logger.error(error)
             return
 
+        # File check
+        self.ui.xls_file_browser.setText(file_dir)
         if not self.ui.xls_file_browser.text():
+            self.__set_info("Did not get file path", "fail")
             return
 
+        # Populate vendor drop down
         purchase_book = load_workbook(file_dir)
         skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
         vendor_sheets = [_ for _ in purchase_book.sheetnames if _ not in skip_list]
@@ -209,17 +210,11 @@ class PembelianWidget(QWidget):
 
         # initial category population
         self.load_cat_items()
-        self.ui.confirm_button.setDisabled(True)
-        self.ui.init_button.setDisabled(True)
 
-        if self.ui.xls_file_browser.text():
-            self.ui.confirm_button.setEnabled(True)
-            self.ui.init_button.setEnabled(True)
-
-            # Add easy to access log with username
-            log_dir = Path(file_dir).parent.joinpath("_LOG").as_posix()
-            self.logger.addHandler(get_file_handler("excel_automator", log_dir))
-            self.logger.debug("Init user logging")
+        # Add easy to access log with username
+        log_dir = Path(file_dir).parent.joinpath("_LOG").as_posix()
+        self.logger.addHandler(get_file_handler("excel_automator", log_dir))
+        self.logger.debug("Init user logging")
 
     def clear_inputs(self):
         self.ui.vendor_combo.clear()
@@ -312,12 +307,15 @@ class PembelianWidget(QWidget):
 
         for column, item in enumerate(details):
             self.ui.commit_table.setItem(new_row, column, item)
-        self.__set_info("Adding item to table...")
+        self.__set_info("Added item to table")
 
     def confirm_table(self):
+        file = self.ui.xls_file_browser.text()
+        if not file:
+            self.__set_info("No file to write to!", "fail")
+            return
         self.make_backup()
         self.logger.info("Executing table")
-        file = self.ui.xls_file_browser.text()
         if self.ui.commit_table.rowCount() == 0:
             self.__set_info("Nothing to write")
             return
@@ -376,6 +374,10 @@ class PembelianWidget(QWidget):
 
     def __set_info(self, message, status=""):
         """Display the info on the GUI
+
+        done: green,
+        fail: red,
+        default: blue
 
         :param message: message to display on the gui
         :type message: str
