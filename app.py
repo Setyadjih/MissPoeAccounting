@@ -105,6 +105,10 @@ class PembelianWidget(QWidget):
     def load_cat_items(self):
         self.ui.item_combo.clear()
         current_cat = self.ui.category_combo.currentText()
+        # incase invalid text
+        if not current_cat:
+            self.logger.error("Cateogory is empty, could not load items")
+            return
         sorted_list = sorted(self.cat_items_dict[current_cat])
         self.ui.item_combo.addItems(sorted_list)
 
@@ -200,13 +204,23 @@ class PembelianWidget(QWidget):
             self.ui.vendor_combo.addItem(vendor)
 
         # populate category selection with item lists
+        bad_cats = []
         for category in self.categories["CATEGORIES"]:
             cat_items = []
-            for row in purchase_book[category].iter_rows(min_row=3, values_only=True):
-                if row[0]:
-                    cat_items.append(row[0])
+            try:
+                for row in purchase_book[category].iter_rows(min_row=3, values_only=True):
+                    if row[0]:
+                        cat_items.append(row[0])
 
-            self.cat_items_dict[category] = cat_items
+                self.cat_items_dict[category] = cat_items
+            except KeyError:
+                self.logger.info(f"{category} not in Workbook")
+                bad_cat_index = self.ui.category_combo.findText(category)
+                bad_cats.append(bad_cat_index)
+
+        # Remove invalid categories from loaded sheet
+        for cat in reversed(sorted(bad_cats)):
+            self.ui.category_combo.removeItem(cat)
 
         # initial category population
         self.load_cat_items()

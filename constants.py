@@ -1,6 +1,6 @@
 from datetime import date
 
-APP_VERSION = 'v0.2.11'
+APP_VERSION = 'v0.2.12'
 DATE = date.today().strftime("%d-%b-%y")
 
 CAT_REF = "excel_categories.txt"
@@ -17,6 +17,7 @@ Appliances
 Cleaning
 Stationary
 Advertising
+Utility
 """
 
 
