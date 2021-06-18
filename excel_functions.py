@@ -268,16 +268,47 @@ def init_formula(excel_item, workbook, skips, logger=None, row=None):
         logger.error(f"ERROR: {e}")
 
 
-# TODO: import missing entries from previous year
-def transfer_records(old_workbook_path, new_workbook_path, logger=None):
+def transfer_records(old_workbook_path, new_workbook_path, categories: dict, logger=None):
+    """Check entries from old to new, append any missing to new"""
     logger = logger if logger else getLogger()
 
-    # Get new entries
-    new_workbook = openpyxl.load_workbook(new_workbook_path, data_only=True)
-    for category in
+    # Get item entries as sets
+    old_cat_items = get_items_in_category(old_workbook_path, categories, logger)
+    new_cat_items = get_items_in_category(new_workbook_path, categories, logger)
 
-    # Get old entries
-    old_workbook = openpyxl.load_workbook(old_workbook_path, data_only=True)
+    missing_items = {}
+    for item in old_cat_items.keys():
+        if item not in new_cat_items.keys():
+            missing_items[item] = old_cat_items[item]
 
+    report = "Missing Items:\n"
+    for item_name in missing_items.keys():
+        report += f"{item_name}\n"
+    logger.debug(report)
+    logger.info("Transferring missing items")
 
     # Copy missing data from old to new
+    for name, values in missing_items.items():
+        new_wb = openpyxl.load_workbook(new_workbook_path)
+        item_category: Worksheet = new_wb[values["category"]]
+        item_category.append([name, values['B'], values['C']])
+
+    logger.debug("Finished transfer!")
+
+
+def get_items_in_category(workbook_path, categories, logger):
+    # Get new entries
+    category_items = {}
+    logger.debug("Checking info from new workbook")
+    workbook = openpyxl.load_workbook(workbook_path, data_only=True)
+    for category in categories["CATEGORIES"]:
+        category_sheet: Worksheet = workbook[category]
+        for row in range(3, category_sheet.max_row):
+            item = {
+                "category": category,
+                "B": category_sheet[f'B{row}'],
+                "C": category_sheet[f'C{row}'],
+            }
+            category_items[category_sheet[f'A{row}']] = item
+
+    return category_items
