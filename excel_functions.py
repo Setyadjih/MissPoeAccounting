@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import openpyxl
 
 from logging import getLogger
@@ -276,23 +278,32 @@ def transfer_records(old_workbook_path, new_workbook_path, categories: dict, log
     old_cat_items = get_items_in_category(old_workbook_path, categories, logger)
     new_cat_items = get_items_in_category(new_workbook_path, categories, logger)
 
-    missing_items = {}
+    # Create row dict for items not in new workbook
+    missing_items = []
     for item in old_cat_items.keys():
         if item not in new_cat_items.keys():
-            missing_items[item] = old_cat_items[item]
+            missing_items.append({
+                "B": item,
+                "I": missing_items[item]["unit"],
+                "J": missing_items[item]["unit_price"],
+                "K": missing_items[item]["category"]
+            })
 
-    report = "Missing Items:\n"
-    for item_name in missing_items.keys():
-        report += f"{item_name}\n"
+    # Generate missing items report
+    logger.info("Transferring missing items:")
+    report = ""
+    for item in missing_items:
+        report += f"{item['B']}\n"
     logger.debug(report)
-    logger.info("Transferring missing items")
 
     # Copy missing data from old to new
-    for name, values in missing_items.items():
+    for item in missing_items:
         new_wb = openpyxl.load_workbook(new_workbook_path)
-        item_category: Worksheet = new_wb[values["category"]]
-        item_category.append([name, values['B'], values['C']])
+        # Use old wb name as a fake vendor
+        item_category: Worksheet = new_wb[Path(old_workbook_path).stem]
+        item_category.append(item)
 
+    init_catsheet(new_workbook_path, categories, logger)
     logger.debug("Finished transfer!")
 
 
@@ -306,9 +317,10 @@ def get_items_in_category(workbook_path, categories, logger):
         for row in range(3, category_sheet.max_row):
             item = {
                 "category": category,
-                "B": category_sheet[f'B{row}'],
-                "C": category_sheet[f'C{row}'],
+                "name": category_sheet[f'A{row}'],
+                "unit": category_sheet[f'B{row}'],
+                "unit_price": category_sheet[f'C{row}'],
             }
-            category_items[category_sheet[f'A{row}']] = item
+            category_items[item['name']] = item
 
     return category_items

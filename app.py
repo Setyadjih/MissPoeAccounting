@@ -16,7 +16,7 @@ from openpyxl import load_workbook
 
 from utils import get_logger, get_file_handler
 from resources.pembelian_ui_ss import Ui_pembelian
-from excel_functions import write_to_excel, init_catsheet
+from excel_functions import write_to_excel, init_catsheet, transfer_records
 from constants import APP_VERSION, DATE, DEFAULT_CATEGORIES, CAT_REF, ExcelItem
 
 
@@ -156,6 +156,25 @@ class PembelianWidget(QWidget):
             return
         self.logger.info("Finished init")
         self.__set_info("All done!", "done")
+
+    def import_data(self):
+        new_workbook = self.ui.xls_file_browser.text()
+        if not new_workbook:
+            self.__set_info("Please select Workbook to import to!", "fail")
+
+        try:
+            old_workbook = QFileDialog.getOpenFileName(filter="Old Workbook (*.xlsx)")[0]
+        except KeyError as error:
+            self.__set_info(f"Failed to pick sheet! Vendor doesn't exist.", "fail")
+            self.logger.error(error)
+            return
+        except Exception as error:
+            self.__set_info(f"Failed to pick sheet! Reason: {error}", "fail")
+            self.logger.error(error)
+            return
+        self.__set_info("Transferring records...")
+        transfer_records(old_workbook, new_workbook, self.categories, self.logger)
+        self.__set_info("Done Transferring!", "done")
 
     def delete_table_row(self):
         current_row = self.ui.commit_table.currentRow()

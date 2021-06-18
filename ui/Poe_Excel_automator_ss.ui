@@ -715,6 +715,13 @@ background-color:#d7ffd9;
                 </spacer>
                </item>
                <item>
+                <widget class="QPushButton" name="import_button">
+                 <property name="text">
+                  <string>Import Data</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QPushButton" name="init_button">
                  <property name="text">
                   <string>Init Data</string>
