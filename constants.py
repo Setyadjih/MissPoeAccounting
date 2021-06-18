@@ -24,15 +24,15 @@ DEFAULT_CATEGORIES = {
 }
 
 
-@dataclass
+@dataclass()
 class ExcelItem:
     """Basic class to hold item data"""
-    name: str
-    vendor: str
-    brand: str
-    quantity: int
-    unit: str
-    cost: int
-    isi: int
-    isi_unit: str
-    category: str
+    name: str = None
+    vendor: str = None
+    brand: str = None
+    quantity: int = None
+    unit: str = None
+    cost: int = None
+    isi: int = None
+    isi_unit: str = None
+    category: str = None
