@@ -19,6 +19,23 @@ Stationary
 Advertising
 Utility
 """
+DEFAULT_CATEGORIES = {
+    "MISC": [
+        "LIST",
+        "ITEM LIST",
+    ],
+    "CATEGORIES": [
+        "Fresh",
+        "Sundries",
+        "Packaging",
+        "Utensils",
+        "Appliances",
+        "Cleaning",
+        "Stationary",
+        "Advertising",
+        "Utility",
+    ]
+}
 
 
 class ExcelItem:

@@ -182,6 +182,7 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
         COUNTIF('[VENDORSHEET]'!B:B, A[ROW]),
         COUNTIF('[VENDORSHEET]'!....
     )
+    Note that this assumes J is the price/unit column, and B is the name column
     :param excel_item: ExcelItem with data
     :param workbook: workbook to read from
     :param skips: sheets to avoid
@@ -265,3 +266,18 @@ def init_formula(excel_item, workbook, skips, logger=None, row=None):
         price_cell_obj.number_format = RP_FORMAT
     except Exception as e:
         logger.error(f"ERROR: {e}")
+
+
+# TODO: import missing entries from previous year
+def transfer_records(old_workbook_path, new_workbook_path, logger=None):
+    logger = logger if logger else getLogger()
+
+    # Get new entries
+    new_workbook = openpyxl.load_workbook(new_workbook_path, data_only=True)
+    for category in
+
+    # Get old entries
+    old_workbook = openpyxl.load_workbook(old_workbook_path, data_only=True)
+
+
+    # Copy missing data from old to new

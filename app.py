@@ -20,6 +20,20 @@ from excel_functions import write_to_excel, init_catsheet
 from constants import APP_VERSION, DATE, DEFAULT_CATEGORIES, CAT_REF, ExcelItem
 
 
+def write_categories_file():
+    with open(CAT_REF, "w") as new_file:
+        for key in DEFAULT_CATEGORIES.keys():
+            new_file.write(f"[{key}]")
+            for value in DEFAULT_CATEGORIES[key]:
+                new_file.write(value)
+    message = QMessageBox()
+    message.setWindowTitle("Default categories file created")
+    message.setText(f"A default category list was created. Please "
+                    f"edit the {CAT_REF} file and rerun "
+                    f"the program if you need to add categories")
+    message.exec_()
+
+
 # noinspection SpellCheckingInspection
 class PembelianWidget(QWidget):
     def __init__(self, parent=None):
@@ -48,42 +62,12 @@ class PembelianWidget(QWidget):
         self.ui.test_button.hide()
 
         # Setup Category list
-        self.categories = {"MISC": [], "CATEGORIES": []}
+        self.categories = DEFAULT_CATEGORIES
 
         # category reference check
         if not Path(CAT_REF).exists():
             self.logger.info("Creating new cat ref file")
-            with open(CAT_REF, "w") as new_file:
-                new_file.write(DEFAULT_CATEGORIES)
-            message = QMessageBox()
-            message.setWindowTitle("Default categories file created")
-            message.setText(f"A default category list was created. Please "
-                            f"edit the {CAT_REF} file and rerun "
-                            f"the program if you need to add categories")
-            message.exec_()
-
-        # Read excel_categories.txt to list available categories
-        with open(CAT_REF) as cat_ref:
-            cat_flag = False
-            for line in cat_ref.readlines():
-                line = line.rstrip()
-                if not line:
-                    continue
-                # Flag check
-                if line == "[CATEGORIES]":
-                    cat_flag = True
-                    continue
-                elif line == "[MISC]":
-                    cat_flag = False
-                    continue
-
-                # input to category dictionary
-                if cat_flag:
-                    self.logger.debug(f"Adding category {line}")
-                    self.categories["CATEGORIES"].append(line)
-                else:
-                    self.logger.debug(f"Adding misc {line}")
-                    self.categories["MISC"].append(line)
+            write_categories_file()
 
         self.ui.category_combo.clear()
         self.ui.category_combo.addItems(self.categories["CATEGORIES"])
