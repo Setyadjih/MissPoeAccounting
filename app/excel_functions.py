@@ -5,7 +5,6 @@ import openpyxl
 from logging import getLogger
 
 from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.styles.borders import Border, Side
 
 from constants import ExcelItem
 
@@ -273,53 +272,56 @@ def init_formula(excel_item, workbook, skips, logger=None, row=None):
 def transfer_records(old_workbook_path, new_workbook_path, categories: dict, logger=None):
     """Check entries from old to new, append any missing to new"""
     logger = logger if logger else getLogger()
+    old_workbook = openpyxl.load_workbook(old_workbook_path, data_only=True)
+    new_workbook = openpyxl.load_workbook(new_workbook_path, data_only=True)
 
     # Get item entries as sets
-    old_cat_items = get_items_in_category(old_workbook_path, categories, logger)
-    new_cat_items = get_items_in_category(new_workbook_path, categories, logger)
+    logger.debug("Generating item lists")
+    old_cat_items = get_items_in_category(old_workbook, categories, logger)
+    new_cat_items = get_items_in_category(new_workbook, categories, logger)
 
     # Create row dict for items not in new workbook
     missing_items = []
-    for item in old_cat_items.keys():
-        if item not in new_cat_items.keys():
+    for item_name in old_cat_items.keys():
+        if item_name not in new_cat_items.keys():
+            logger.debug(f"Found missing item: {item_name}")
             missing_items.append({
-                "B": item,
-                "I": missing_items[item]["unit"],
-                "J": missing_items[item]["unit_price"],
-                "K": missing_items[item]["category"]
+                "B": item_name,
+                "I": old_cat_items[item_name]["unit"],
+                "J": old_cat_items[item_name]["unit_price"],
+                "K": old_cat_items[item_name]["category"]
             })
 
-    # Generate missing items report
-    logger.info("Transferring missing items:")
-    report = ""
-    for item in missing_items:
-        report += f"{item['B']}\n"
-    logger.debug(report)
-
     # Copy missing data from old to new
+    new_workbook = openpyxl.load_workbook(new_workbook_path)
     for item in missing_items:
-        new_wb = openpyxl.load_workbook(new_workbook_path)
-        # Use old wb name as a fake vendor
-        item_category: Worksheet = new_wb[Path(old_workbook_path).stem]
+        try:
+            # Use old wb name as a fake vendor
+            item_category = new_workbook["_IMPORT_"]
+        except KeyError:
+            new_workbook.create_sheet("_IMPORT_")
+            item_category = new_workbook["_IMPORT_"]
+
         item_category.append(item)
 
+    logger.debug("Saving and beginning init")
+    new_workbook.save(new_workbook_path)
     init_catsheet(new_workbook_path, categories, logger)
     logger.debug("Finished transfer!")
 
 
-def get_items_in_category(workbook_path, categories, logger):
+def get_items_in_category(workbook, categories, logger):
     # Get new entries
     category_items = {}
-    logger.debug("Checking info from new workbook")
-    workbook = openpyxl.load_workbook(workbook_path, data_only=True)
+    logger.debug("Checking info from workbook")
     for category in categories["CATEGORIES"]:
         category_sheet: Worksheet = workbook[category]
         for row in range(3, category_sheet.max_row):
             item = {
                 "category": category,
-                "name": category_sheet[f'A{row}'],
-                "unit": category_sheet[f'B{row}'],
-                "unit_price": category_sheet[f'C{row}'],
+                "name": category_sheet[f'A{row}'].value,
+                "unit": category_sheet[f'B{row}'].value,
+                "unit_price": category_sheet[f'C{row}'].value,
             }
             category_items[item['name']] = item
 

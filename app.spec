@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, Path().absolute().as_posix())
-from constants import APP_VERSION
+from app.constants import APP_VERSION
 
 block_cipher = None
 

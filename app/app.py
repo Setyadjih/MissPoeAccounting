@@ -80,6 +80,7 @@ class PembelianWidget(QWidget):
         self.ui.file_browse_button.clicked.connect(self.get_excel_sheet)
         self.ui.confirm_button.clicked.connect(self.confirm_table)
         self.ui.init_button.clicked.connect(self.init_cat_button)
+        self.ui.import_button.clicked.connect(self.import_data)
 
         self.ui.category_combo.currentIndexChanged.connect(self.load_cat_items)
 
