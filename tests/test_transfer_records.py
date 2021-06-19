@@ -1,7 +1,5 @@
-import openpyxl
-
-from app.excel_functions import transfer_records
-from app.constants import DEFAULT_CATEGORIES
+from core.excel_functions import transfer_records
+from core.constants import DEFAULT_CATEGORIES
 
 
 def main():
