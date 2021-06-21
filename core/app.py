@@ -279,59 +279,50 @@ class PembelianWidget(QWidget):
             self.__set_info("Values cannot be 0!", "fail")
             return
 
-        date_text = self.ui.date_line.text()
-        date = datetime.strptime(date_text, "%d-%b-%y")
-
         # Commit input to table
         row_count = self.ui.commit_table.rowCount()
         self.ui.commit_table.insertRow(row_count)
         new_row = row_count
 
+        details = self.get_ui_details()
+        for column, item in enumerate(details):
+            self.ui.commit_table.setItem(new_row, column, item)
+        self.__set_info("Added item to table")
+
+    def get_ui_details(self):
+        date_text = self.ui.date_line.text()
+        date = datetime.strptime(date_text, "%d-%b-%y")
         total_cost = self.ui.qty_spin.value() * self.ui.harga_spin.value()
         unit_cost = total_cost / self.ui.isi_spin.value()
-
         date_data = QTableWidgetItem(self.ui.date_line.text())
         date_data.setData(Qt.UserRole, date)
-
         vendor_data = QTableWidgetItem(self.ui.vendor_combo.currentText())
         vendor_data.setData(Qt.UserRole, self.ui.vendor_combo.currentText())
-
         if not self.ui.merek_line.text():
             self.ui.merek_line.setText("")
-
         merek_data = QTableWidgetItem(self.ui.merek_line.text())
         merek_data.setData(Qt.UserRole, self.ui.merek_line.text())
-
         item_text = self.ui.item_combo.currentText()
         if self.ui.new_item_check.isChecked():
-            item_text = self.ui.item_line.text()
+            item_text = self.ui.item_line.text().strip()
         item_data = QTableWidgetItem(item_text)
         item_data.setData(Qt.UserRole, item_text)
-
         qty_data = QTableWidgetItem(self.ui.qty_spin.text())
         qty_data.setData(Qt.UserRole, self.ui.qty_spin.value())
-
         unit_data = QTableWidgetItem(self.ui.unit_combo.currentText())
         unit_data.setData(Qt.UserRole, self.ui.unit_combo.currentText())
-
         harga_data = QTableWidgetItem(self.ui.harga_spin.text())
         harga_data.setData(Qt.UserRole, self.ui.harga_spin.value())
-
         total_data = QTableWidgetItem(str(total_cost))
         total_data.setData(Qt.UserRole, total_cost)
-
         isi_data = QTableWidgetItem(self.ui.isi_spin.text())
         isi_data.setData(Qt.UserRole, self.ui.isi_spin.value())
-
         isi_unit_data = QTableWidgetItem(self.ui.isi_unit_combo.currentText())
         isi_unit_data.setData(Qt.UserRole, self.ui.isi_unit_combo.currentText())
-
         unit_harga_data = QTableWidgetItem(str(unit_cost))
         unit_harga_data.setData(Qt.UserRole, unit_cost)
-
         category_data = QTableWidgetItem(self.ui.category_combo.currentText())
         category_data.setData(Qt.UserRole, self.ui.category_combo.currentText())
-
         details = (
             date_data,
             item_data,
@@ -346,10 +337,7 @@ class PembelianWidget(QWidget):
             unit_harga_data,
             category_data,
         )
-
-        for column, item in enumerate(details):
-            self.ui.commit_table.setItem(new_row, column, item)
-        self.__set_info("Added item to table")
+        return details
 
     def confirm_table(self):
         file = self.ui.xls_file_browser.text()
@@ -364,33 +352,23 @@ class PembelianWidget(QWidget):
 
         for row in range(self.ui.commit_table.rowCount()):
             try:
-                # Get values from item ranges
+                # Get values from item ranges as an ExcelItem
+                excel_item = ExcelItem()
                 date = self.ui.commit_table.item(row, 0).data(Qt.UserRole)
-                name = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
-                vendor = self.ui.commit_table.item(row, 2).data(Qt.UserRole)
-                brand = self.ui.commit_table.item(row, 3).data(Qt.UserRole)
-                quantity = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
-                unit = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
-                cost = self.ui.commit_table.item(row, 6).data(Qt.UserRole)
-                isi = self.ui.commit_table.item(row, 8).data(Qt.UserRole)
-                isi_unit = self.ui.commit_table.item(row, 9).data(Qt.UserRole)
-                category = self.ui.commit_table.item(row, 11).data(Qt.UserRole)
 
-                if not name:
+                excel_item.name = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
+                excel_item.vendor = self.ui.commit_table.item(row, 2).data(Qt.UserRole)
+                excel_item.brand = self.ui.commit_table.item(row, 3).data(Qt.UserRole)
+                excel_item.quantity = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
+                excel_item.unit = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
+                excel_item.cost = self.ui.commit_table.item(row, 6).data(Qt.UserRole)
+                excel_item.isi = self.ui.commit_table.item(row, 8).data(Qt.UserRole)
+                excel_item.isi_unit = self.ui.commit_table.item(row, 9).data(Qt.UserRole)
+                excel_item.category = self.ui.commit_table.item(row, 11).data(Qt.UserRole)
+
+                if not excel_item.name:
                     self.__set_info("item is empty")
                     return
-
-                excel_item = ExcelItem(
-                    name,
-                    vendor,
-                    brand,
-                    quantity,
-                    unit,
-                    cost,
-                    isi,
-                    isi_unit,
-                    category
-                )
 
                 # Execute table to excel
                 skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
