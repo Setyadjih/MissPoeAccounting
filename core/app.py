@@ -9,12 +9,17 @@ from PySide2.QtWidgets import (
     QTableWidgetItem,
     QFileDialog,
     QAction,
-    QMessageBox
+    QMessageBox,
 )
 from PySide2.QtCore import Qt
 from openpyxl import load_workbook
 
-from core.utils import get_logger, get_file_handler, write_categories_file, read_categories_file
+from core.utils import (
+    get_logger,
+    get_file_handler,
+    write_categories_file,
+    read_categories_file,
+)
 from resources.pembelian_ui_ss import Ui_pembelian
 from core.excel_functions import write_to_excel, init_catsheet, transfer_records
 from core.constants import APP_VERSION, DATE, DEFAULT_CATEGORIES, CAT_REF, ExcelItem
@@ -340,11 +345,8 @@ class PembelianWidget(QWidget):
 
                 self.__set_info("Writing to Excel sheet...")
             except Exception as error:
-                self.logger.error(f"Failed on "
-                                  f"{self.ui.commit_table.item(row, 1)}")
-                self.__set_info(
-                    f"Failed writing to excel sheet! Reason: {error}", "fail"
-                )
+                self.logger.error(f"Failed on " f"{self.ui.commit_table.item(row, 1)}")
+                self.__set_info(f"Failed writing to excel sheet! Reason: {error}", "fail")
                 self.logger.error(f"Error: {error}")
                 return
         self.clean_table()

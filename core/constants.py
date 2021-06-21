@@ -1,7 +1,7 @@
 from datetime import date
 from dataclasses import dataclass
 
-APP_VERSION = 'v0.2.14'
+APP_VERSION = "v0.2.14"
 DATE = date.today().strftime("%d-%b-%y")
 
 CAT_REF = "excel_categories.txt"
@@ -20,14 +20,15 @@ DEFAULT_CATEGORIES = {
         "Stationary",
         "Advertising",
         "Utility",
-        "Storage"
-    ]
+        "Storage",
+    ],
 }
 
 
 @dataclass()
 class ExcelItem:
     """Basic class to hold item data"""
+
     name: str = None
     vendor: str = None
     brand: str = None

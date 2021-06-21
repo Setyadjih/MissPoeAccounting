@@ -11,15 +11,14 @@ DATE_FORMAT = "dd-mmm-yy"
 COMMA_FORMAT = "#,##0"
 RP_FORMAT = u'_("Rp"* #,##0_);_("Rp"* (#,##0);_("Rp"* "-"_);_(@_)'
 
-cat_sheets = {"LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging",
-              "Utensils", "Appliances", "Cleaning"}
+cat_sheets = {"LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging", "Utensils", "Appliances", "Cleaning"}
 
 
 def clean_item_names(vendor_sheet: Worksheet, logger=None):
     """Some entries have extra whitespace. This can mess with the cat entries, so we need to strip the names."""
     logger = logger if logger else get_logger("clean_item_names")
 
-    for row in range(3, vendor_sheet.max_row+1):
+    for row in range(3, vendor_sheet.max_row + 1):
         item_name = vendor_sheet[f"B{row}"].value
         if not item_name:
             continue
@@ -90,7 +89,7 @@ def init_catsheet(file, categories: dict, logger=None):
                     "Sundry": "Sundries",
                     "Alat tulis": "Stationary",
                     "Stationery": "Stationary",
-                    "Appliance": "Appliances"
+                    "Appliance": "Appliances",
                 }
 
                 category_check = categ.strip().lower().capitalize()
@@ -110,9 +109,7 @@ def init_catsheet(file, categories: dict, logger=None):
                 continue
 
             logger.info(f"Appending {item} to {categ}")
-            excel_item = ExcelItem(
-                name=item, vendor=sheet_name, isi_unit=isi_unit, category=categ
-            )
+            excel_item = ExcelItem(name=item, vendor=sheet_name, isi_unit=isi_unit, category=categ)
             update_cat_avg(excel_item, input_wb, skip_list, logger)
             done_set.add(item)
     input_wb.save(file)
@@ -120,7 +117,7 @@ def init_catsheet(file, categories: dict, logger=None):
 
 
 def write_to_excel(skips, date, file, excel_item, logger=None):
-    """ Write the given data to the purchasing excel sheet
+    """Write the given data to the purchasing excel sheet
 
     :param skips sheets to skip
     :type skips: List[str]
@@ -156,7 +153,7 @@ def write_to_excel(skips, date, file, excel_item, logger=None):
     input_vendor[f"D{input_row}"] = excel_item.quantity
     input_vendor[f"E{input_row}"] = excel_item.unit
     input_vendor[f"F{input_row}"] = excel_item.cost
-    input_vendor[f"G{input_row}"] = f'=D{input_row}*F{input_row}'
+    input_vendor[f"G{input_row}"] = f"=D{input_row}*F{input_row}"
     input_vendor[f"H{input_row}"] = excel_item.isi
     input_vendor[f"I{input_row}"] = excel_item.isi_unit
     input_vendor[f"J{input_row}"] = f"=G{input_row}/H{input_row}"
@@ -252,7 +249,7 @@ def init_formula(excel_item, workbook, skips, logger=None, row=None):
     # Set row to given, max_row, or minimum 3
     if not row:
         logger.debug(f"Creating {category} entry")
-        workbook[category].append({'A': excel_item.name, 'B': excel_item.isi_unit})
+        workbook[category].append({"A": excel_item.name, "B": excel_item.isi_unit})
         row = workbook[category].max_row
     row = row if row > 3 else 3
 
@@ -298,12 +295,14 @@ def transfer_records(old_workbook_path, new_workbook_path, categories: dict, log
     for item_name in old_cat_items.keys():
         if item_name not in new_cat_items.keys():
             logger.debug(f"Found missing item: {item_name.strip()}")
-            missing_items.append({
-                "B": item_name.strip(),
-                "I": old_cat_items[item_name]["unit"],
-                "J": old_cat_items[item_name]["unit_price"],
-                "K": old_cat_items[item_name]["category"]
-            })
+            missing_items.append(
+                {
+                    "B": item_name.strip(),
+                    "I": old_cat_items[item_name]["unit"],
+                    "J": old_cat_items[item_name]["unit_price"],
+                    "K": old_cat_items[item_name]["category"],
+                }
+            )
 
     # Copy missing data from old to new
     new_workbook = openpyxl.load_workbook(new_workbook_path)
@@ -333,10 +332,10 @@ def get_items_in_category(workbook, categories, logger=None):
         for row in range(3, category_sheet.max_row):
             item = {
                 "category": category,
-                "name": category_sheet[f'A{row}'].value,
-                "unit": category_sheet[f'B{row}'].value,
-                "unit_price": category_sheet[f'C{row}'].value,
+                "name": category_sheet[f"A{row}"].value,
+                "unit": category_sheet[f"B{row}"].value,
+                "unit_price": category_sheet[f"C{row}"].value,
             }
-            category_items[item['name']] = item
+            category_items[item["name"]] = item
 
     return category_items

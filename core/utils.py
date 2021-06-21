@@ -9,9 +9,7 @@ from PySide2.QtWidgets import QMessageBox
 
 from core.constants import CAT_REF, DEFAULT_CATEGORIES
 
-LOGGER_FORMAT = '%(asctime)s - ' \
-                '%(module)s.%(funcName)s - ' \
-                '%(levelname)s - %(message)s'
+LOGGER_FORMAT = "%(asctime)s - " "%(module)s.%(funcName)s - " "%(levelname)s - %(message)s"
 FORMATTER = logging.Formatter(LOGGER_FORMAT)
 
 
@@ -34,7 +32,7 @@ def get_file_handler(file_name, log_dir=None):
     # this path resolve to something like this:
     # C:\Users\<USER_NAME>\AppData\Local\Temp\_LOG
     # file_dir for custom path
-    log_temp_location = os.path.join(tempfile.gettempdir(), '_LOG')
+    log_temp_location = os.path.join(tempfile.gettempdir(), "_LOG")
     if log_dir:
         log_temp_location = log_dir
         print(f"log_dir: {log_dir}")
@@ -42,11 +40,9 @@ def get_file_handler(file_name, log_dir=None):
         os.makedirs(log_temp_location)
 
     today = str(datetime.date.today())
-    log_file = os.path.join(log_temp_location, f'{file_name}_{today}.log')
+    log_file = os.path.join(log_temp_location, f"{file_name}_{today}.log")
     if log_dir:
-        log_file = os.path.join(
-            log_temp_location, f'{getuser()}_{file_name}_{today}.log'
-        )
+        log_file = os.path.join(log_temp_location, f"{getuser()}_{file_name}_{today}.log")
 
     file_handler = logging.FileHandler(log_file)
     file_handler.setFormatter(FORMATTER)
@@ -75,9 +71,11 @@ def write_categories_file():
                 new_file.write(value)
     message = QMessageBox()
     message.setWindowTitle("Default categories file created")
-    message.setText(f"A default category list was created. Please "
-                    f"edit the {CAT_REF} file and rerun "
-                    f"the program if you need to add categories")
+    message.setText(
+        f"A default category list was created. Please "
+        f"edit the {CAT_REF} file and rerun "
+        f"the program if you need to add categories"
+    )
     message.exec_()
 
 
