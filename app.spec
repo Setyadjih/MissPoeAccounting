@@ -5,12 +5,12 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, Path().absolute().as_posix())
-from constants import APP_VERSION
+from core.constants import APP_VERSION
 
 block_cipher = None
 
 
-a = Analysis(['app.py'],
+a = Analysis(['core\\app.py'],
              pathex=['D:\\Work\\Miss Poe\\Costings'],
              binaries=[],
              datas=[('resources\\*.ico', 'resources')],

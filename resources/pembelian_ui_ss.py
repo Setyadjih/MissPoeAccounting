@@ -397,6 +397,11 @@ class Ui_pembelian(object):
 
         self.horizontalLayout_9.addItem(self.horizontalSpacer_5)
 
+        self.import_button = QPushButton(self.inner_frame_3)
+        self.import_button.setObjectName(u"import_button")
+
+        self.horizontalLayout_9.addWidget(self.import_button)
+
         self.init_button = QPushButton(self.inner_frame_3)
         self.init_button.setObjectName(u"init_button")
 
@@ -532,6 +537,7 @@ class Ui_pembelian(object):
         ___qtablewidgetitem10.setText(QCoreApplication.translate("pembelian", u"Harga/Unit", None));
         ___qtablewidgetitem11 = self.commit_table.horizontalHeaderItem(11)
         ___qtablewidgetitem11.setText(QCoreApplication.translate("pembelian", u"Category", None));
+        self.import_button.setText(QCoreApplication.translate("pembelian", u"Import Data", None))
         self.init_button.setText(QCoreApplication.translate("pembelian", u"Init Data", None))
         self.test_button.setText(QCoreApplication.translate("pembelian", u"TEST", None))
         self.confirm_button.setText(QCoreApplication.translate("pembelian", u"Confirm", None))
