@@ -5,6 +5,9 @@ import tempfile
 import logging
 from getpass import getuser
 
+from PySide2.QtWidgets import QMessageBox
+
+from core.constants import CAT_REF, DEFAULT_CATEGORIES
 
 LOGGER_FORMAT = '%(asctime)s - ' \
                 '%(module)s.%(funcName)s - ' \
@@ -62,3 +65,39 @@ def get_logger(logger_name=__name__):
     logger.addHandler(get_file_handler(logger_name))
     logger.propagate = False
     return logger
+
+
+def write_categories_file():
+    with open(CAT_REF, "w") as new_file:
+        for key in DEFAULT_CATEGORIES.keys():
+            new_file.write(f"[{key}]")
+            for value in DEFAULT_CATEGORIES[key]:
+                new_file.write(value)
+    message = QMessageBox()
+    message.setWindowTitle("Default categories file created")
+    message.setText(f"A default category list was created. Please "
+                    f"edit the {CAT_REF} file and rerun "
+                    f"the program if you need to add categories")
+    message.exec_()
+
+
+def read_categories_file():
+    category_dict = {}
+    is_cat = False
+
+    with open(CAT_REF, "r") as cat_file:
+        lines = cat_file.readlines()
+
+        for line in lines:
+            if "[MISC]" in line:
+                is_cat = False
+                continue
+
+            if "[CATEGORIES]" in line:
+                is_cat = True
+                continue
+
+            key = "CATEGORIES" if is_cat else "MISC"
+            category_dict[key] = line
+
+    return category_dict

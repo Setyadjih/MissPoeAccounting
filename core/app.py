@@ -14,46 +14,10 @@ from PySide2.QtWidgets import (
 from PySide2.QtCore import Qt
 from openpyxl import load_workbook
 
-from core.utils import get_logger, get_file_handler
+from core.utils import get_logger, get_file_handler, write_categories_file, read_categories_file
 from resources.pembelian_ui_ss import Ui_pembelian
 from core.excel_functions import write_to_excel, init_catsheet, transfer_records
 from core.constants import APP_VERSION, DATE, DEFAULT_CATEGORIES, CAT_REF, ExcelItem
-
-
-def write_categories_file():
-    with open(CAT_REF, "w") as new_file:
-        for key in DEFAULT_CATEGORIES.keys():
-            new_file.write(f"[{key}]")
-            for value in DEFAULT_CATEGORIES[key]:
-                new_file.write(value)
-    message = QMessageBox()
-    message.setWindowTitle("Default categories file created")
-    message.setText(f"A default category list was created. Please "
-                    f"edit the {CAT_REF} file and rerun "
-                    f"the program if you need to add categories")
-    message.exec_()
-
-
-def read_categories_file():
-    category_dict = {}
-    is_cat = False
-
-    with open(CAT_REF, "r") as cat_file:
-        lines = cat_file.readlines()
-
-        for line in lines:
-            if "[MISC]" in line:
-                is_cat = False
-                continue
-
-            if "[CATEGORIES]" in line:
-                is_cat = True
-                continue
-
-            key = "CATEGORIES" if is_cat else "MISC"
-            category_dict[key] = line
-
-    return category_dict
 
 
 # noinspection SpellCheckingInspection
