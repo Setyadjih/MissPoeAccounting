@@ -34,6 +34,28 @@ def write_categories_file():
     message.exec_()
 
 
+def read_categories_file():
+    category_dict = {}
+    is_cat = False
+
+    with open(CAT_REF, "r") as cat_file:
+        lines = cat_file.readlines()
+
+        for line in lines:
+            if "[MISC]" in line:
+                is_cat = False
+                continue
+
+            if "[CATEGORIES]" in line:
+                is_cat = True
+                continue
+
+            key = "CATEGORIES" if is_cat else "MISC"
+            category_dict[key] = line
+
+    return category_dict
+
+
 # noinspection SpellCheckingInspection
 class PembelianWidget(QWidget):
     def __init__(self, parent=None):
@@ -68,6 +90,8 @@ class PembelianWidget(QWidget):
         if not Path(CAT_REF).exists():
             self.logger.info("Creating new cat ref file")
             write_categories_file()
+        else:
+            read_categories_file()
 
         self.ui.category_combo.clear()
         self.ui.category_combo.addItems(self.categories["CATEGORIES"])

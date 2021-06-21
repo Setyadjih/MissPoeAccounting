@@ -15,6 +15,20 @@ cat_sheets = {"LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging",
               "Utensils", "Appliances", "Cleaning"}
 
 
+def clean_item_names(vendor_sheet: Worksheet, logger=None):
+    """Some entries have extra whitespace. This can mess with the cat entries, so we need to strip the names."""
+    logger = logger if logger else get_logger("clean_item_names")
+
+    for row in range(3, vendor_sheet.max_row+1):
+        item_name = vendor_sheet[f"B{row}"].value
+        if not item_name:
+            continue
+
+        if item_name != item_name.strip():
+            logger.debug(f"'{item_name}' is not clean, stripping to {item_name.strip()}")
+            vendor_sheet[f"B{row}"] = item_name
+
+
 def init_catsheet(file, categories: dict, logger=None):
     logger = logger if logger else get_logger("Init_catsheet")
     # Load excel file path
@@ -40,18 +54,18 @@ def init_catsheet(file, categories: dict, logger=None):
     for sheet_name in vendor_sheets:
         sheet: Worksheet = input_wb[sheet_name]
         logger.info(f"Sheet: {sheet}")
-        vendor_items = next(sheet.iter_cols(min_col=2, max_col=2, min_row=3, values_only=True))
-        row = 2
-        for item in vendor_items:
-            row += 1
 
+        clean_item_names(sheet, logger)
+        vendor_items = next(sheet.iter_cols(min_col=2, max_col=2, min_row=3, values_only=True))
+
+        for item in vendor_items:
             # Early check done_list to skip checking in cat sheet
             if not item or item in done_set:
-                logger.debug("Skipping item")
                 continue
 
-            item = item.strip()
-            logger.debug(f"ROW: {row}, item: {item}")
+            logger.debug(f"Look for '{item}' in {sheet_name}")
+            row = vendor_items.index(item) + 3
+            logger.debug(f"ROW: {row}, ITEM: {item}")
 
             # Try to get data from row. If missing data, give defaults
             try:
@@ -196,6 +210,7 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
 
     category = excel_item.category
     vendor_check = excel_item.vendor
+    logger.debug(f"Updating {excel_item.name} in {excel_item.category} with {excel_item.vendor}")
 
     # check if item in list
     cat_items = next(workbook[category].iter_cols(1, 1, values_only=True))
@@ -213,7 +228,7 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
             logger.debug("Vendor already in formula")
 
         else:
-            logger.debug("Vendor is new, adding to formula")
+            logger.debug(f"Vendor is new [{vendor_check}], adding to formula")
             sumif_str = f"SUMIF('{vendor_check}'!B:B, A{row}, '{vendor_check}'!J:J),"
             countif_str = f"COUNTIF('{vendor_check}'!B:B, A{row}),"
 
@@ -225,25 +240,21 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
             workbook[category][f"C{row}"] = full_avg_formula
 
     else:
-        logger.debug("Item is new, adding and initializing formula")
         init_formula(excel_item, workbook, skips, logger)
 
 
 def init_formula(excel_item, workbook, skips, logger=None, row=None):
     """Generate full average formula. Get the row as a check in the book."""
+    logger.info("Item is new, adding and initializing formula")
     logger = logger if logger else get_logger("init_formula")
     category = excel_item.category
 
+    # Set row to given, max_row, or minimum 3
     if not row:
-        logger.info(f"Item is new, creating {category} entry")
+        logger.debug(f"Creating {category} entry")
         workbook[category].append({'A': excel_item.name, 'B': excel_item.isi_unit})
         row = workbook[category].max_row
-
-    else:
-        logger.info("Item exists, creating average formula...")
-
-    if row < 3:
-        row = 3
+    row = row if row > 3 else 3
 
     # Iterating through each worksheet to find all vendors with item
     logger.debug(f"Beginning iteration")
@@ -256,6 +267,7 @@ def init_formula(excel_item, workbook, skips, logger=None, row=None):
         for vendor in vendors:
             items = next(workbook[vendor].iter_cols(2, 2, values_only=True))
             if excel_item.name in items:
+                logger.debug(f"Found item in {vendor}")
                 price_count += f"SUMIF('{vendor}'!B:B, A{row}, '{vendor}'!J:J),"
                 entry_count += f"COUNTIF('{vendor}'!B:B, A{row}),"
 
@@ -265,6 +277,7 @@ def init_formula(excel_item, workbook, skips, logger=None, row=None):
 
         price_cell_obj = workbook[category].cell(row=row, column=3)
         price_cell_obj.number_format = RP_FORMAT
+        logger.debug(f"Finished iteration:\n{avg_formula}")
     except Exception as e:
         logger.error(f"ERROR: {e}")
 
@@ -284,9 +297,9 @@ def transfer_records(old_workbook_path, new_workbook_path, categories: dict, log
     missing_items = []
     for item_name in old_cat_items.keys():
         if item_name not in new_cat_items.keys():
-            logger.debug(f"Found missing item: {item_name}")
+            logger.debug(f"Found missing item: {item_name.strip()}")
             missing_items.append({
-                "B": item_name,
+                "B": item_name.strip(),
                 "I": old_cat_items[item_name]["unit"],
                 "J": old_cat_items[item_name]["unit_price"],
                 "K": old_cat_items[item_name]["category"]

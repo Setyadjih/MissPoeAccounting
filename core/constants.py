@@ -20,6 +20,7 @@ DEFAULT_CATEGORIES = {
         "Stationary",
         "Advertising",
         "Utility",
+        "Storage"
     ]
 }
 
