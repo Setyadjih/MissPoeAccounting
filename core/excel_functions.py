@@ -1,6 +1,7 @@
 import openpyxl
 
 from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.styles import Font
 
 from core.constants import ExcelItem
 from core.utils import get_logger
@@ -28,20 +29,34 @@ def clean_item_names(vendor_sheet: Worksheet, logger=None):
             vendor_sheet[f"B{row}"] = item_name
 
 
-def init_catsheet(file, categories: dict, logger=None):
-    logger = logger if logger else get_logger("Init_catsheet")
-    # Load excel file path
-    # Due to openpyxl's structure, we need the data_only=False wb to save
-    # formula
-    input_wb = openpyxl.load_workbook(file, data_only=False)
+# TODO: test that this works!
+def create_category_sheet(workbook, category, logger=None):
+    logger = logger if logger else get_logger("create_category_sheet")
+    logger.info(f"Creating {category} in workbook")
 
-    # Clear out all category sheets, leaving the header only
-    for category in categories["CATEGORIES"]:
-        category_sheet = input_wb[category]
-        max_row = max(category_sheet.max_row, 3)
-        logger.debug(f"Clearing {category} from 3 to {max_row}")
-        category_sheet.delete_rows(3, max_row)
-    input_wb.save(file)
+    workbook.create_sheet(category)
+    new_sheet: Worksheet = workbook[category]
+
+    new_sheet["A1"] = "ITEM"
+    new_sheet["A1"].font = Font(bold=True)
+    new_sheet.merge_cells("A1:A2")
+
+    new_sheet["B1"] = "UNIT"
+    new_sheet["B1"].font = Font(bold=True)
+    new_sheet.merge_cells("B1:B2")
+
+    new_sheet["C1"] = "MOV AVER"
+    new_sheet["C1"].font = Font(bold=True)
+    new_sheet["C2"] = "PRICE/UNIT"
+    new_sheet["C2"].font = Font(bold=True)
+
+
+def init_catsheet(file, categories: dict, logger=None):
+    """Clear out category sheets and recreate the entries"""
+    logger = logger if logger else get_logger("init_catsheet")
+    # Due to openpyxl's structure, we need the data_only=False wb to save formula
+    input_wb = openpyxl.load_workbook(file, data_only=False)
+    clean_category_sheets(categories, input_wb, logger)
 
     # default dict
     done_set = {"None", " "}
@@ -56,64 +71,84 @@ def init_catsheet(file, categories: dict, logger=None):
 
         clean_item_names(sheet, logger)
         vendor_items = next(sheet.iter_cols(min_col=2, max_col=2, min_row=3, values_only=True))
-
         for item in vendor_items:
-            # Early check done_list to skip checking in cat sheet
             if not item or item in done_set:
+                logger.debug("Item is done, skipping")
                 continue
 
             logger.debug(f"Look for '{item}' in {sheet_name}")
             row = vendor_items.index(item) + 3
             logger.debug(f"ROW: {row}, ITEM: {item}")
-
-            # Try to get data from row. If missing data, give defaults
-            try:
-                isi_unit = sheet[f"I{row}"].value
-                if not isi_unit:
-                    isi_unit = sheet[f"E{row}"].value
-
-            except IndexError:
-                logger.error("Isi error, assigning g")
-                isi_unit = "g"
-
-            # Check for common typos in categories
-            try:
-                categ: str = sheet[f"K{row}"].value
-                if not categ:
-                    logger.debug("Assigning to default")
-                    categ = "Fresh"
-
-                corrections = {
-                    "Utensil": "Utensils",
-                    "Packing": "Packaging",
-                    "Sundry": "Sundries",
-                    "Alat tulis": "Stationary",
-                    "Stationery": "Stationary",
-                    "Appliance": "Appliances",
-                }
-
-                category_check = categ.strip().lower().capitalize()
-                if category_check in corrections.keys():
-                    categ = corrections[category_check]
-
-            except IndexError:
-                logger.error("category error, assigning Fresh")
-                categ = "Fresh"
-
-            logger.debug(f"Category: {categ}")
+            excel_item = row_to_excel_item(sheet, row, logger)
 
             # Check if item is already in cat sheet
-            cat_items = next(input_wb[categ].iter_cols(1, 1, values_only=True))
-            if item in cat_items:
+            category_items = next(input_wb[excel_item.category].iter_cols(1, 1, values_only=True))
+            if item in category_items:
                 logger.info("Item already in category, skipping")
                 continue
 
-            logger.info(f"Appending {item} to {categ}")
-            excel_item = ExcelItem(name=item, vendor=sheet_name, isi_unit=isi_unit, category=categ)
+            logger.info(f"Appending {excel_item.name} to {excel_item.category}")
             update_cat_avg(excel_item, input_wb, skip_list, logger)
             done_set.add(item)
     input_wb.save(file)
     logger.info("All done with init")
+
+
+def row_to_excel_item(sheet: Worksheet, row, logger=None):
+    """Try to get data from row with clean up. If missing data, give defaults"""
+    logger = logger if logger else get_logger("row_to_excel_item")
+
+    item_name = sheet[f"B{row}"]
+    sheet_title = sheet.title
+
+    # Guard against missing units
+    try:
+        isi_unit = sheet[f"I{row}"].value
+        if not isi_unit:
+            isi_unit = sheet[f"E{row}"].value
+    except IndexError:
+        logger.error("Isi error, assigning g")
+        isi_unit = "g"
+
+    # Check for common typos in categories
+    try:
+        category_value: str = sheet[f"K{row}"].value
+        if not category_value:
+            logger.debug("Assigning to default")
+            category_value = "Fresh"
+        category_cleaned = category_value.strip().lower().capitalize()
+        corrections = {
+            "Utensil": "Utensils",
+            "Packing": "Packaging",
+            "Sundry": "Sundries",
+            "Alat tulis": "Stationary",
+            "Stationery": "Stationary",
+            "Appliance": "Appliances",
+        }
+        if category_cleaned in corrections.keys():
+            category_value = corrections[category_cleaned]
+    except IndexError:
+        logger.error("category error, assigning Fresh")
+        category_value = "Fresh"
+
+    logger.debug(f"Category: {category_value}")
+    return ExcelItem(name=item_name, vendor=sheet_title, isi_unit=isi_unit, category=category_value)
+
+
+def clean_category_sheets(categories, input_wb, logger):
+    # Clear out all category sheets, leaving the header only
+    for category in categories["CATEGORIES"]:
+        # Create all missing category sheets
+        try:
+            category_sheet = input_wb[category]
+        except KeyError:
+            logger.warning(f"{category} not in workbook!")
+            create_category_sheet(input_wb, category, logger)
+            category_sheet = input_wb[category]
+
+        max_row = max(category_sheet.max_row, 3)
+        logger.debug(f"Clearing {category} from 3 to {max_row}")
+        category_sheet.delete_rows(3, max_row)
 
 
 def write_to_excel(skips, date, file, excel_item, logger=None):
@@ -187,12 +222,14 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
     Average formula template:
     SUM(
         SUMIF('[VENDORSHEET]'!B:B, A[ROW], '[VENDORSHEET]'!J:J),
-        SUMIF('[VENDERSHEET]'!....
+        SUMIF('[VENDORSHEET]'!B:B, A[ROW], '[VENDORSHEET]'!J:J),
+        ...
     )
     /
     SUM(
         COUNTIF('[VENDORSHEET]'!B:B, A[ROW]),
-        COUNTIF('[VENDORSHEET]'!....
+        COUNTIF('[VENDORSHEET]'!B:B, A[ROW]),
+        ...
     )
     Note that this assumes J is the price/unit column, and B is the name column
     :param excel_item: ExcelItem with data

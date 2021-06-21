@@ -80,7 +80,8 @@ def write_categories_file():
 
 
 def read_categories_file():
-    category_dict = {}
+    """Read from category file"""
+    category_dict = {"MISC": [], "CATEGORIES": []}
     is_cat = False
 
     with open(CAT_REF, "r") as cat_file:
@@ -96,6 +97,6 @@ def read_categories_file():
                 continue
 
             key = "CATEGORIES" if is_cat else "MISC"
-            category_dict[key] = line
+            category_dict[key].append(line.replace("\n", ""))
 
     return category_dict

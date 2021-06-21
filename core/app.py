@@ -27,7 +27,7 @@ from core.constants import APP_VERSION, DATE, DEFAULT_CATEGORIES, CAT_REF, Excel
 
 # noinspection SpellCheckingInspection
 class PembelianWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, test=False, parent=None):
         super(PembelianWidget, self).__init__(parent)
         self.ui = Ui_pembelian()
         self.ui.setupUi(self)
@@ -51,34 +51,31 @@ class PembelianWidget(QWidget):
 
         # Default test button to hide
         self.ui.test_button.hide()
+        if test:
+            self.ui.test_button.show()
+            self.ui.test_button.clicked.connect(self.test_func)
 
-        # Setup Category list
+        # Setup Category dictionary and file
         self.categories = DEFAULT_CATEGORIES
 
-        # category reference check
         if not Path(CAT_REF).exists():
             self.logger.info("Creating new cat ref file")
             write_categories_file()
         else:
-            read_categories_file()
+            self.categories = read_categories_file()
 
+        self.skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
         self.ui.category_combo.clear()
         self.ui.category_combo.addItems(self.categories["CATEGORIES"])
 
         # Hookup buttons
-        self.ui.test_button.clicked.connect(self.test_func)
-
         self.ui.new_item_check.clicked.connect(self.item_input_toggle)
         self.ui.add_vendor_button.clicked.connect(self.add_to_table)
         self.ui.file_browse_button.clicked.connect(self.get_excel_sheet)
         self.ui.confirm_button.clicked.connect(self.confirm_table)
         self.ui.init_button.clicked.connect(self.init_cat_button)
         self.ui.import_button.clicked.connect(self.import_data)
-
         self.ui.category_combo.currentIndexChanged.connect(self.load_cat_items)
-
-        # TEST BUTTON ENABLE OR DISABLE
-        # self.ui.test_button.show()
 
     def load_cat_items(self):
         self.ui.item_combo.clear()
@@ -117,31 +114,25 @@ class PembelianWidget(QWidget):
         shutil.copyfile(file, dest)
 
     def init_cat_button(self):
+        """Start initialization of category sheets"""
         file = self.ui.xls_file_browser.text()
         if not file:
             self.__set_info("No file to write to!", "fail")
             return
 
-        self.make_backup()
-
-        # Setting up warning box to be sure
-        warning = QMessageBox()
-        warning.setIcon(QMessageBox.Warning)
-        warning.setText(
+        result = QMessageBox.warning(
+            self,
+            "Are you sure?",
             "Initializing the category data can take a long time, are you sure"
-            " you want to do this?\n The category sheets will be cleared out."
+            " you want to do this?\n The category sheets will be cleared out.",
+            QMessageBox.Cancel,
+            QMessageBox.Ok
         )
-        warning.setWindowTitle("Are you sure?")
-
-        # BITWISE OR operator to combine the button options
-        warning.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-
-        # result is an int, compare to qmessage status works
-        result = warning.exec_()
-        if result == QMessageBox.Cancel:
+        if result != QMessageBox.Ok:
             return
 
         self.__set_info("Working on data....")
+        self.make_backup()
         try:
             init_catsheet(file, self.categories, self.logger)
         except Exception as e:
@@ -309,49 +300,54 @@ class PembelianWidget(QWidget):
         return details
 
     def confirm_table(self):
+        """Commit table to excel file"""
+        self.logger.info("Executing table to excel file")
+
         file = self.ui.xls_file_browser.text()
         if not file:
             self.__set_info("No file to write to!", "fail")
             return
-        self.make_backup()
-        self.logger.info("Executing table")
+
         if self.ui.commit_table.rowCount() == 0:
             self.__set_info("Nothing to write")
             return
 
+        self.make_backup()
         for row in range(self.ui.commit_table.rowCount()):
             try:
                 # Get values from item ranges as an ExcelItem
-                excel_item = ExcelItem()
                 date = self.ui.commit_table.item(row, 0).data(Qt.UserRole)
-
-                excel_item.name = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
-                excel_item.vendor = self.ui.commit_table.item(row, 2).data(Qt.UserRole)
-                excel_item.brand = self.ui.commit_table.item(row, 3).data(Qt.UserRole)
-                excel_item.quantity = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
-                excel_item.unit = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
-                excel_item.cost = self.ui.commit_table.item(row, 6).data(Qt.UserRole)
-                excel_item.isi = self.ui.commit_table.item(row, 8).data(Qt.UserRole)
-                excel_item.isi_unit = self.ui.commit_table.item(row, 9).data(Qt.UserRole)
-                excel_item.category = self.ui.commit_table.item(row, 11).data(Qt.UserRole)
+                excel_item = self.create_excel_item(row)
 
                 if not excel_item.name:
                     self.__set_info("item is empty")
-                    return
+                    raise ValueError
 
                 # Execute table to excel
-                skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
-                write_to_excel(skip_list, date, file, excel_item, self.logger)
-
                 self.__set_info("Writing to Excel sheet...")
+                write_to_excel(self.skip_list, date, file, excel_item, self.logger)
             except Exception as error:
-                self.logger.error(f"Failed on " f"{self.ui.commit_table.item(row, 1)}")
                 self.__set_info(f"Failed writing to excel sheet! Reason: {error}", "fail")
+                self.logger.error(f"Failed on " f"{self.ui.commit_table.item(row, 1)}")
                 self.logger.error(f"Error: {error}")
                 return
+
         self.clean_table()
         self.logger.debug("Finished writing")
         self.__set_info("All done writing!", status="done")
+
+    def create_excel_item(self, row):
+        excel_item = ExcelItem()
+        excel_item.name = self.ui.commit_table.item(row, 1).data(Qt.UserRole)
+        excel_item.vendor = self.ui.commit_table.item(row, 2).data(Qt.UserRole)
+        excel_item.brand = self.ui.commit_table.item(row, 3).data(Qt.UserRole)
+        excel_item.quantity = self.ui.commit_table.item(row, 4).data(Qt.UserRole)
+        excel_item.unit = self.ui.commit_table.item(row, 5).data(Qt.UserRole)
+        excel_item.cost = self.ui.commit_table.item(row, 6).data(Qt.UserRole)
+        excel_item.isi = self.ui.commit_table.item(row, 8).data(Qt.UserRole)
+        excel_item.isi_unit = self.ui.commit_table.item(row, 9).data(Qt.UserRole)
+        excel_item.category = self.ui.commit_table.item(row, 11).data(Qt.UserRole)
+        return excel_item
 
     def clean_table(self):
         self.ui.commit_table.clearContents()
@@ -386,7 +382,7 @@ class PembelianWidget(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    window = PembelianWidget()
+    window = PembelianWidget(test=False)
     window.show()
 
     sys.exit(app.exec_())
