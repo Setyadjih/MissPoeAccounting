@@ -98,7 +98,7 @@ def row_to_excel_item(sheet: Worksheet, row, logger=None):
     """Try to get data from row with clean up. If missing data, give defaults"""
     logger = logger if logger else get_logger("row_to_excel_item")
 
-    item_name = sheet[f"B{row}"]
+    item_name = sheet[f"B{row}"].value
     sheet_title = sheet.title
 
     # Guard against missing units
@@ -154,8 +154,8 @@ def clean_category_sheets(categories, input_wb, logger):
 def write_to_excel(skips, date, file, excel_item, logger=None):
     """Write the given data to the purchasing excel sheet
 
-    :param skips sheets to skip
-    :type skips: List[str]
+    :param skips: sheets to skip
+    :type skips: List
     :param str date: date of purchase
     :param str file: file path to excel sheet to edit
     :param excel_item: ExcelItem with data
@@ -231,12 +231,14 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
         COUNTIF('[VENDORSHEET]'!B:B, A[ROW]),
         ...
     )
+
     Note that this assumes J is the price/unit column, and B is the name column
+
     :param excel_item: ExcelItem with data
     :param workbook: workbook to read from
     :param skips: sheets to avoid
     :param logger: logger pass through
-    :return average
+    :return: average
     """
     # Check for item in each ws
     # for each ws with item, add SUMIF to final formula

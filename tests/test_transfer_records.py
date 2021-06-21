@@ -1,5 +1,6 @@
 from pathlib import Path
 import shutil
+import os
 
 from core.excel_functions import transfer_records
 from core.constants import DEFAULT_CATEGORIES
@@ -13,7 +14,10 @@ def main():
     transfer_records(old_wb_path, new_wb_path, categories=DEFAULT_CATEGORIES)
 
     # Save test result to new name, save
-    Path(new_wb_path).rename(Path(new_wb_path).with_name(Path(new_wb_path).stem + "_TEST_RESULT.xlsx"))
+    test_result_name = Path(new_wb_path).with_name(Path(new_wb_path).stem + "_TEST_RESULT.xlsx")
+    if test_result_name.exists():
+        os.remove(test_result_name)
+    Path(new_wb_path).rename(test_result_name)
     shutil.copy(orig_wb_path, new_wb_path)
 
 
