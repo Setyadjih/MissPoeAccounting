@@ -1,9 +1,9 @@
 import openpyxl
-from logging import getLogger
 
 from openpyxl.worksheet.worksheet import Worksheet
 
 from core.constants import ExcelItem
+from core.utils import get_logger
 
 # Today as 30-Mar-19
 DATE_FORMAT = "dd-mmm-yy"
@@ -15,8 +15,8 @@ cat_sheets = {"LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging",
               "Utensils", "Appliances", "Cleaning"}
 
 
-def init_catsheet(file, categories: dict, logger):
-    logger = logger if logger else getLogger()
+def init_catsheet(file, categories: dict, logger=None):
+    logger = logger if logger else get_logger("Init_catsheet")
     # Load excel file path
     # Due to openpyxl's structure, we need the data_only=False wb to save
     # formula
@@ -40,14 +40,17 @@ def init_catsheet(file, categories: dict, logger):
     for sheet_name in vendor_sheets:
         sheet: Worksheet = input_wb[sheet_name]
         logger.info(f"Sheet: {sheet}")
-        items = next(sheet.iter_cols(min_col=2, max_col=2, min_row=3, values_only=True))
-        for item in items:
+        vendor_items = next(sheet.iter_cols(min_col=2, max_col=2, min_row=3, values_only=True))
+        row = 2
+        for item in vendor_items:
+            row += 1
+
             # Early check done_list to skip checking in cat sheet
             if not item or item in done_set:
                 logger.debug("Skipping item")
                 continue
 
-            row = items.index(item) + 3
+            item = item.strip()
             logger.debug(f"ROW: {row}, item: {item}")
 
             # Try to get data from row. If missing data, give defaults
@@ -113,7 +116,7 @@ def write_to_excel(skips, date, file, excel_item, logger=None):
     :type excel_item: ExcelItem
     :param logger: logger pass through
     """
-    logger = logger if logger else getLogger()
+    logger = logger if logger else get_logger("write_to_excel")
 
     # Load excel file path
     # Need the data_only=False wb to save formula
@@ -189,7 +192,7 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
     """
     # Check for item in each ws
     # for each ws with item, add SUMIF to final formula
-    logger = logger if logger else getLogger()
+    logger = logger if logger else get_logger("update_cat_average")
 
     category = excel_item.category
     vendor_check = excel_item.vendor
@@ -228,7 +231,7 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
 
 def init_formula(excel_item, workbook, skips, logger=None, row=None):
     """Generate full average formula. Get the row as a check in the book."""
-    logger = logger if logger else getLogger()
+    logger = logger if logger else get_logger("init_formula")
     category = excel_item.category
 
     if not row:
@@ -268,7 +271,7 @@ def init_formula(excel_item, workbook, skips, logger=None, row=None):
 
 def transfer_records(old_workbook_path, new_workbook_path, categories: dict, logger=None):
     """Check entries from old to new, append any missing to new"""
-    logger = logger if logger else getLogger()
+    logger = logger if logger else get_logger()
     old_workbook = openpyxl.load_workbook(old_workbook_path, data_only=True)
     new_workbook = openpyxl.load_workbook(new_workbook_path, data_only=True)
 
@@ -307,7 +310,8 @@ def transfer_records(old_workbook_path, new_workbook_path, categories: dict, log
     logger.debug("Finished transfer!")
 
 
-def get_items_in_category(workbook, categories, logger):
+def get_items_in_category(workbook, categories, logger=None):
+    logger = logger if logger else get_logger("get_items_in_cat")
     # Get new entries
     category_items = {}
     logger.debug("Checking info from workbook")
