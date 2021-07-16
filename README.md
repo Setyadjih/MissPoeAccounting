@@ -1,5 +1,5 @@
 # Excel Automator for Miss Poe
-A Pyside2 application to automate Excel record keeping and accounting for my mother. The design of the application was made in close cooperation with her, and feedback from other users of the application
+A Pyside2 application to automate Excel record keeping and accounting. I primarily designed the application for use with my family. The design of the application was made in close cooperation with my family, and feedback from other users of the application
 
 ## How it works
 The application dynamically generates the vendor and item list based on the excel sheet, using a txt file editable by users for specific category names. These names identify the category worksheets in the workbook, to differentiate from the vendor sheets. 
