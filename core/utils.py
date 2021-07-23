@@ -63,12 +63,12 @@ def get_logger(logger_name=__name__):
     return logger
 
 
-def write_categories_file():
+def write_default_categories_file():
     with open(CAT_REF, "w") as new_file:
         for key in DEFAULT_CATEGORIES.keys():
-            new_file.write(f"[{key}]")
+            new_file.write(f"[{key}]\n")
             for value in DEFAULT_CATEGORIES[key]:
-                new_file.write(value)
+                new_file.write(f"{value}\n")
     message = QMessageBox()
     message.setWindowTitle("Default categories file created")
     message.setText(

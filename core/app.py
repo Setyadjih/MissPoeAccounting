@@ -17,7 +17,7 @@ from openpyxl import load_workbook
 from core.utils import (
     get_logger,
     get_file_handler,
-    write_categories_file,
+    write_default_categories_file,
     read_categories_file,
 )
 from resources.pembelian_ui_ss import Ui_pembelian
@@ -56,13 +56,11 @@ class PembelianWidget(QWidget):
             self.ui.test_button.clicked.connect(self.test_func)
 
         # Setup Category dictionary and file
-        self.categories = DEFAULT_CATEGORIES
-
+        self.logger.debug(f"Checking for CAT_REF at: {Path(CAT_REF).absolute()}")
         if not Path(CAT_REF).exists():
             self.logger.info("Creating new cat ref file")
-            write_categories_file()
-        else:
-            self.categories = read_categories_file()
+            write_default_categories_file()
+        self.categories = read_categories_file()
 
         self.skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
         self.ui.category_combo.clear()
@@ -143,6 +141,7 @@ class PembelianWidget(QWidget):
         self.__set_info("All done!", "done")
 
     def import_data(self):
+        """Import data from previous workbook to current active workbook"""
         new_workbook = self.ui.xls_file_browser.text()
         if not new_workbook:
             self.__set_info("Please select Workbook to import to!", "fail")
@@ -219,6 +218,7 @@ class PembelianWidget(QWidget):
         self.logger.debug("Init user logging")
 
     def clear_inputs(self):
+        """Clear out input fields"""
         self.ui.vendor_combo.clear()
         self.ui.item_line.clear()
         self.ui.qty_spin.clear()

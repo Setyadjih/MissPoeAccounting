@@ -113,22 +113,8 @@ def row_to_excel_item(sheet: Worksheet, row, logger=None):
     # Check for common typos in categories
     try:
         category_value: str = sheet[f"K{row}"].value
-        if not category_value:
-            logger.debug("Assigning to default")
-            category_value = "Fresh"
-        category_cleaned = category_value.strip().lower().capitalize()
-        corrections = {
-            "Utensil": "Utensils",
-            "Packing": "Packaging",
-            "Sundry": "Sundries",
-            "Alat tulis": "Stationary",
-            "Stationery": "Stationary",
-            "Appliance": "Appliances",
-        }
-        if category_cleaned in corrections.keys():
-            category_value = corrections[category_cleaned]
     except IndexError:
-        logger.error("category error, assigning Fresh")
+        logger.error("Error getting Category, assigning Fresh")
         category_value = "Fresh"
 
     logger.debug(f"Category: {category_value}")
