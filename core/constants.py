@@ -1,7 +1,7 @@
 from datetime import date
 from dataclasses import dataclass
 
-APP_VERSION = "v0.2.16"
+APP_VERSION = "v0.2.17"
 DATE = date.today().strftime("%d-%b-%y")
 
 CAT_REF = "excel_categories.txt"
@@ -17,7 +17,7 @@ DEFAULT_CATEGORIES = {
         "Utensils",
         "Appliances",
         "Cleaning",
-        "Stationary",
+        "Stationery",
         "Advertising",
         "Utility",
         "Storage",
