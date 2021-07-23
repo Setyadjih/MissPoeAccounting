@@ -17,7 +17,7 @@ DEFAULT_CATEGORIES = {
         "Utensils",
         "Appliances",
         "Cleaning",
-        "Stationary",
+        "Stationery",
         "Advertising",
         "Utility",
         "Storage",

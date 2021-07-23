@@ -82,7 +82,7 @@ class PembelianWidget(QWidget):
         current_cat = self.ui.category_combo.currentText()
         # incase invalid text
         if not current_cat:
-            self.logger.error("Cateogory is empty, could not load items")
+            self.logger.error("Category is empty, could not load items")
             return
         sorted_list = sorted(self.cat_items_dict[current_cat])
         self.ui.item_combo.addItems(sorted_list)
