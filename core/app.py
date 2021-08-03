@@ -22,7 +22,7 @@ from core.utils import (
 )
 from resources.pembelian_ui_ss import Ui_pembelian
 from core.excel_functions import write_to_excel, init_catsheet, transfer_records
-from core.constants import APP_VERSION, DATE, DEFAULT_CATEGORIES, CAT_REF, ExcelItem
+from core.constants import APP_VERSION, DATE, CAT_REF, ExcelItem
 
 
 # noinspection SpellCheckingInspection
