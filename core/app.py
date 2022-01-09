@@ -66,6 +66,13 @@ class PembelianWidget(QWidget):
         self.ui.category_combo.clear()
         self.ui.category_combo.addItems(self.categories["CATEGORIES"])
 
+        # Setup button Tooltips
+        self.ui.file_browse_button.setToolTip("Select workbook to make active")
+        self.ui.add_vendor_button.setToolTip("Add entry")
+        self.ui.import_button.setToolTip("Import price data from previous to active workbook")
+        self.ui.init_button.setToolTip("Clear and recheck category items")
+        self.ui.confirm_button.setToolTip("Confirm entries to excel")
+
         # Hookup buttons
         self.ui.new_item_check.clicked.connect(self.item_input_toggle)
         self.ui.add_vendor_button.clicked.connect(self.add_to_table)
