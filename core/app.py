@@ -15,7 +15,7 @@ from PySide2.QtCore import Qt
 from openpyxl import load_workbook
 
 from core.utils import (
-    get_logger,
+    init_logger,
     get_file_handler,
     write_default_categories_file,
     read_categories_file,
@@ -23,7 +23,7 @@ from core.utils import (
 )
 from resources.pembelian_ui_ss import Ui_pembelian
 from core.excel_functions import write_to_excel, init_catsheet, transfer_records
-from core.constants import APP_VERSION, DATE, CAT_REF, ExcelItem
+from core.constants import APP_VERSION, DATE, CAT_REF, ExcelItem, LOGGER_NAME
 
 
 # noinspection SpellCheckingInspection
@@ -33,7 +33,7 @@ class PembelianWidget(QWidget):
         self.ui = Ui_pembelian()
         self.ui.setupUi(self)
         self.ui.date_line.setText(DATE)
-        self.logger = get_logger("excel_automator")
+        self.logger = init_logger(LOGGER_NAME)
         self.logger.info("Initializing program")
 
         self.cat_items_dict = {}
@@ -141,7 +141,7 @@ class PembelianWidget(QWidget):
         self.__set_info("Working on data....")
         self.make_backup()
         try:
-            init_catsheet(file, self.categories, self.logger)
+            init_catsheet(file, self.categories)
         except Exception as e:
             self.logger.error(e)
             self.__set_info(f"Failed to init data! Error: {e}", "fail")
@@ -166,7 +166,7 @@ class PembelianWidget(QWidget):
             self.logger.error(error)
             return
         self.__set_info("Transferring records...")
-        transfer_records(old_workbook, new_workbook, self.categories, self.logger)
+        transfer_records(old_workbook, new_workbook, self.categories)
         self.__set_info("Done Transferring!", "done")
 
     def delete_table_row(self):
@@ -334,7 +334,7 @@ class PembelianWidget(QWidget):
 
                 # Execute table to excel
                 self.__set_info("Writing to Excel sheet...")
-                write_to_excel(date, file, excel_item, self.logger)
+                write_to_excel(date, file, excel_item)
             except Exception as error:
                 self.__set_info(f"Failed writing to excel sheet! Reason: {error}", "fail")
                 self.logger.error(f"Failed on " f"{self.ui.commit_table.item(row, 1)}")

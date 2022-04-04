@@ -1,16 +1,17 @@
+from logging import getLogger
+
 import openpyxl
 from openpyxl.utils import column_index_from_string
-
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles import Font
 
-from core.constants import ExcelItem, AVG_PRICE_FORMULA, DATE_FORMAT, COMMA_FORMAT, RP_FORMAT, ITEM_INPUT_FORMAT
-from core.utils import get_logger, get_skip_list
+from core.constants import ExcelItem, AVG_PRICE_FORMULA, DATE_FORMAT, COMMA_FORMAT, RP_FORMAT, ITEM_INPUT_FORMAT, LOGGER_NAME
+from core.utils import get_skip_list
 
 
-def clean_item_names(vendor_sheet: Worksheet, logger=None):
+def clean_item_names(vendor_sheet: Worksheet):
     """Some entries have extra whitespace. This can mess with the cat entries, so we need to strip the names."""
-    logger = logger if logger else get_logger("clean_item_names")
+    logger = getLogger(LOGGER_NAME)
 
     for row in range(3, vendor_sheet.max_row + 1):
         item_name = vendor_sheet[f"B{row}"].value
@@ -23,8 +24,8 @@ def clean_item_names(vendor_sheet: Worksheet, logger=None):
 
 
 # TODO: test that this works!
-def create_category_sheet(workbook, category, logger=None):
-    logger = logger if logger else get_logger("create_category_sheet")
+def create_category_sheet(workbook, category):
+    logger = getLogger(LOGGER_NAME)
     logger.info(f"Creating {category} in workbook")
 
     workbook.create_sheet(category)
@@ -44,12 +45,12 @@ def create_category_sheet(workbook, category, logger=None):
     new_sheet["C2"].font = Font(bold=True)
 
 
-def init_catsheet(file, categories: dict, logger=None):
+def init_catsheet(file, categories: dict):
     """Clear out category sheets and recreate the entries"""
-    logger = logger if logger else get_logger("init_catsheet")
+    logger = getLogger(LOGGER_NAME)
     # Due to openpyxl's structure, we need the data_only=False wb to save formula
     input_wb = openpyxl.load_workbook(file, data_only=False)
-    clean_category_sheets(categories, input_wb, logger)
+    clean_category_sheets(categories, input_wb)
 
     # default dict
     done_set = {"None", " "}
@@ -62,7 +63,7 @@ def init_catsheet(file, categories: dict, logger=None):
         sheet: Worksheet = input_wb[sheet_name]
         logger.info(f"Sheet: {sheet}")
 
-        clean_item_names(sheet, logger)
+        clean_item_names(sheet)
         vendor_items = next(sheet.iter_cols(min_col=2, max_col=2, min_row=3, values_only=True))
         for item in vendor_items:
             if not item or item in done_set:
@@ -72,7 +73,7 @@ def init_catsheet(file, categories: dict, logger=None):
             logger.debug(f"Look for '{item}' in {sheet_name}")
             row = vendor_items.index(item) + 3
             logger.debug(f"ROW: {row}, ITEM: {item}")
-            excel_item = row_to_excel_item(sheet, row, logger)
+            excel_item = row_to_excel_item(sheet, row)
 
             # Check if item is already in cat sheet
             category_items = next(input_wb[excel_item.category].iter_cols(1, 1, values_only=True))
@@ -81,15 +82,15 @@ def init_catsheet(file, categories: dict, logger=None):
                 continue
 
             logger.info(f"Appending {excel_item.name} to {excel_item.category}")
-            update_cat_avg(excel_item, input_wb, logger)
+            update_cat_avg(excel_item, input_wb)
             done_set.add(item)
     input_wb.save(file)
     logger.info("All done with init")
 
 
-def row_to_excel_item(sheet: Worksheet, row, logger=None):
+def row_to_excel_item(sheet: Worksheet, row):
     """Try to get data from row with clean up. If missing data, give defaults"""
-    logger = logger if logger else get_logger("row_to_excel_item")
+    logger = getLogger(LOGGER_NAME)
 
     item_name = sheet[f"B{row}"].value
     sheet_title = sheet.title
@@ -114,7 +115,9 @@ def row_to_excel_item(sheet: Worksheet, row, logger=None):
     return ExcelItem(name=item_name, vendor=sheet_title, isi_unit=isi_unit, category=category_value)
 
 
-def clean_category_sheets(category_dict, input_wb, logger):
+def clean_category_sheets(category_dict, input_wb):
+    logger = getLogger(LOGGER_NAME)
+
     # Clear out all category sheets, leaving the header only
     for category in category_dict["CATEGORIES"]:
         # Create all missing category sheets
@@ -122,7 +125,7 @@ def clean_category_sheets(category_dict, input_wb, logger):
             category_sheet = input_wb[category]
         except KeyError:
             logger.warning(f"{category} not in workbook!")
-            create_category_sheet(input_wb, category, logger)
+            create_category_sheet(input_wb, category)
             category_sheet = input_wb[category]
 
         max_row = max(category_sheet.max_row, 3)
@@ -130,16 +133,15 @@ def clean_category_sheets(category_dict, input_wb, logger):
         category_sheet.delete_rows(3, max_row)
 
 
-def write_to_excel(date, file, excel_item, logger=None):
+def write_to_excel(date, file, excel_item):
     """Write the given data to the purchasing excel sheet
 
     :param str date: date of purchase
     :param str file: file path to excel sheet to edit
     :param excel_item: ExcelItem with data
     :type excel_item: ExcelItem
-    :param logger: logger pass through
     """
-    logger = logger if logger else get_logger("write_to_excel")
+    logger = getLogger(LOGGER_NAME)
 
     # Load excel file path
     # Need the data_only=False wb to save formula
@@ -188,21 +190,20 @@ def write_to_excel(date, file, excel_item, logger=None):
     per_unit_cell.number_format = RP_FORMAT
 
     logger.debug(f"Assigning {excel_item.name} to {excel_item.category}")
-    update_cat_avg(excel_item, input_wb, logger)
+    update_cat_avg(excel_item, input_wb)
 
     input_wb.save(file)
 
 
-def update_cat_avg(excel_item, workbook, logger=None):
+def update_cat_avg(excel_item, workbook):
     """Calculate average price for each item, total quantity, total units
 
     Assumes J is the price/unit column, and B is the name column
 
     :param excel_item: ExcelItem with data
     :param workbook: workbook to read from
-    :param logger: logger pass through
     """
-    logger = logger if logger else get_logger("update_cat_average")
+    logger = getLogger(LOGGER_NAME)
 
     category = excel_item.category
     logger.debug(f"Checking Item: {excel_item.name} in Category: {excel_item.category}.")
@@ -210,15 +211,16 @@ def update_cat_avg(excel_item, workbook, logger=None):
     # check if item in list
     cat_items = next(workbook[category].iter_cols(1, 1, values_only=True))
     if excel_item.name not in cat_items:
-        init_formula(excel_item, workbook, logger)
+        init_formula(excel_item, workbook)
     else:
         logger.debug(f"Item: {excel_item.name} already entered.")
 
 
-def init_formula(excel_item, workbook, logger=None, row=None):
+def init_formula(excel_item, workbook, row=None):
     """Generate full average formula. Get the row as a check in the book."""
+    logger = getLogger(LOGGER_NAME)
     logger.info("Item is new, adding and initializing formula")
-    logger = logger if logger else get_logger("init_formula")
+
     category = excel_item.category
 
     # Set row to given, max_row, or minimum 3
@@ -231,9 +233,10 @@ def init_formula(excel_item, workbook, logger=None, row=None):
     workbook[category][f"C{row}"] = AVG_PRICE_FORMULA
 
 
-def transfer_records(old_workbook_path, new_workbook_path, categories: dict, logger=None):
+def transfer_records(old_workbook_path, new_workbook_path, categories: dict):
     """Check entries from old to new, append any missing to new"""
-    logger = logger if logger else get_logger()
+    logger = getLogger(LOGGER_NAME)
+
     old_workbook = openpyxl.load_workbook(old_workbook_path, data_only=True)
     new_workbook = openpyxl.load_workbook(new_workbook_path, data_only=True)
     new_workbook_input = openpyxl.load_workbook(new_workbook_path, data_only=False)
@@ -247,9 +250,9 @@ def transfer_records(old_workbook_path, new_workbook_path, categories: dict, log
     # Get item entries as sets
     logger.debug("Generating item lists...")
     logger.debug("Getting items from old workbook...")
-    old_cat_items = get_items_in_category(old_workbook, categories, logger)
+    old_cat_items = get_items_in_category(old_workbook, categories)
     logger.debug("Getting items from new workbook...")
-    new_cat_items = get_items_in_category(new_workbook, categories, logger)
+    new_cat_items = get_items_in_category(new_workbook, categories)
 
     # Append missing items to new workbook
     for item_name in old_cat_items.keys():
@@ -265,12 +268,12 @@ def transfer_records(old_workbook_path, new_workbook_path, categories: dict, log
 
     logger.debug("Saving and beginning init")
     new_workbook_input.save(new_workbook_path)
-    init_catsheet(new_workbook_path, categories, logger)
+    init_catsheet(new_workbook_path, categories)
     logger.debug("Finished transfer!")
 
 
-def get_items_in_category(workbook, categories, logger=None):
-    logger = logger if logger else get_logger("get_items_in_cat")
+def get_items_in_category(workbook, categories):
+    logger = getLogger(LOGGER_NAME)
     # Get new entries
     category_items = {}
     logger.debug("Checking info from workbook")

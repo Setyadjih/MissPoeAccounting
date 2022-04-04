@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 APP_VERSION = "v1.0.0"
 DATE = date.today().strftime("%d-%b-%y")
-LOGGER_NAME = "poe.log"
+LOGGER_NAME = "automator.log"
 
 # Today as 30-Mar-19
 DATE_FORMAT = "dd-mmm-yy"

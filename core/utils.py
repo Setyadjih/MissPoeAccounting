@@ -49,7 +49,7 @@ def get_file_handler(file_name, log_dir=None):
     return file_handler
 
 
-def get_logger(logger_name=__name__):
+def init_logger(logger_name=__name__):
     """python logging module
 
     :param logger_name: name of logger handle
