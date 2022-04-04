@@ -19,6 +19,7 @@ from core.utils import (
     get_file_handler,
     write_default_categories_file,
     read_categories_file,
+    get_skip_list,
 )
 from resources.pembelian_ui_ss import Ui_pembelian
 from core.excel_functions import write_to_excel, init_catsheet, transfer_records
@@ -62,7 +63,7 @@ class PembelianWidget(QWidget):
             write_default_categories_file()
         self.categories = read_categories_file()
 
-        self.skip_list = self.categories["CATEGORIES"] + self.categories["MISC"]
+        self.skip_list = get_skip_list()
         self.ui.category_combo.clear()
         self.ui.category_combo.addItems(self.categories["CATEGORIES"])
 
@@ -83,6 +84,7 @@ class PembelianWidget(QWidget):
         self.ui.category_combo.currentIndexChanged.connect(self.load_cat_items)
 
     def load_cat_items(self):
+        """Load all items in cateogory"""
         self.ui.item_combo.clear()
         current_cat = self.ui.category_combo.currentText()
         # incase invalid text
@@ -332,7 +334,7 @@ class PembelianWidget(QWidget):
 
                 # Execute table to excel
                 self.__set_info("Writing to Excel sheet...")
-                write_to_excel(self.skip_list, date, file, excel_item, self.logger)
+                write_to_excel(date, file, excel_item, self.logger)
             except Exception as error:
                 self.__set_info(f"Failed writing to excel sheet! Reason: {error}", "fail")
                 self.logger.error(f"Failed on " f"{self.ui.commit_table.item(row, 1)}")

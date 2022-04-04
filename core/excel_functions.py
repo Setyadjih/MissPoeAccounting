@@ -4,7 +4,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles import Font
 
 from core.constants import ExcelItem
-from core.utils import get_logger
+from core.utils import get_logger, get_skip_list
 
 # Today as 30-Mar-19
 DATE_FORMAT = "dd-mmm-yy"
@@ -60,7 +60,7 @@ def init_catsheet(file, categories: dict, logger=None):
 
     # default dict
     done_set = {"None", " "}
-    skip_list = categories["CATEGORIES"] + categories["MISC"]
+    skip_list = get_skip_list()
 
     # Iterate over all vendor sheets
     vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in skip_list]
@@ -73,7 +73,7 @@ def init_catsheet(file, categories: dict, logger=None):
         vendor_items = next(sheet.iter_cols(min_col=2, max_col=2, min_row=3, values_only=True))
         for item in vendor_items:
             if not item or item in done_set:
-                logger.debug("Item is done, skipping")
+                logger.debug(f"{item} is done, skipping")
                 continue
 
             logger.debug(f"Look for '{item}' in {sheet_name}")
@@ -88,7 +88,7 @@ def init_catsheet(file, categories: dict, logger=None):
                 continue
 
             logger.info(f"Appending {excel_item.name} to {excel_item.category}")
-            update_cat_avg(excel_item, input_wb, skip_list, logger)
+            update_cat_avg(excel_item, input_wb, logger)
             done_set.add(item)
     input_wb.save(file)
     logger.info("All done with init")
@@ -121,9 +121,9 @@ def row_to_excel_item(sheet: Worksheet, row, logger=None):
     return ExcelItem(name=item_name, vendor=sheet_title, isi_unit=isi_unit, category=category_value)
 
 
-def clean_category_sheets(categories, input_wb, logger):
+def clean_category_sheets(category_dict, input_wb, logger):
     # Clear out all category sheets, leaving the header only
-    for category in categories["CATEGORIES"]:
+    for category in category_dict["CATEGORIES"]:
         # Create all missing category sheets
         try:
             category_sheet = input_wb[category]
@@ -137,11 +137,9 @@ def clean_category_sheets(categories, input_wb, logger):
         category_sheet.delete_rows(3, max_row)
 
 
-def write_to_excel(skips, date, file, excel_item, logger=None):
+def write_to_excel(date, file, excel_item, logger=None):
     """Write the given data to the purchasing excel sheet
 
-    :param skips: sheets to skip
-    :type skips: List
     :param str date: date of purchase
     :param str file: file path to excel sheet to edit
     :param excel_item: ExcelItem with data
@@ -198,12 +196,12 @@ def write_to_excel(skips, date, file, excel_item, logger=None):
     per_unit_cell.number_format = RP_FORMAT
 
     logger.debug(f"Assigning {excel_item.name} to {excel_item.category}")
-    update_cat_avg(excel_item, input_wb, skips, logger)
+    update_cat_avg(excel_item, input_wb, logger)
 
     input_wb.save(file)
 
 
-def update_cat_avg(excel_item, workbook, skips, logger=None):
+def update_cat_avg(excel_item, workbook, logger=None):
     """Calculate average price for each item, total quantity, total units
     Average formula template:
     SUM(
@@ -222,16 +220,23 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
 
     :param excel_item: ExcelItem with data
     :param workbook: workbook to read from
-    :param skips: sheets to avoid
     :param logger: logger pass through
     :return: average
     """
     # Check for item in each ws
     # for each ws with item, add SUMIF to final formula
+
+    # TODO: Have a "Vendors" named range in a "data" sheet
+    #   Replace Formula with
+    #  =SUMPRODUCT(SUMIF(INDIRECT("'"&Vendors&"'!"&"B:B"),A[ROW], INDIRECT("'"&Vendors&"'!"&"J:J")))
+    #     / SUMPRODUCT(COUNTIF(INDIRECT("'"&Vendors&"'!"&"B:B"), A[ROW]))
+    #  No longer need to count each vendor
+
+
     logger = logger if logger else get_logger("update_cat_average")
 
     category = excel_item.category
-    vendor_check = excel_item.vendor
+    vendor = excel_item.vendor
     logger.debug(f"Updating {excel_item.name} in {excel_item.category} with {excel_item.vendor}")
 
     # check if item in list
@@ -244,15 +249,15 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
         avg_formula: str = workbook[category][f"C{row}"].value
         if not avg_formula:
             logger.debug("Item exists, but missing formula; Initializing...")
-            init_formula(excel_item, workbook, skips, logger, row)
+            init_formula(excel_item, workbook, logger, row)
 
-        elif vendor_check in avg_formula:
+        elif vendor in avg_formula:
             logger.debug("Vendor already in formula")
 
         else:
-            logger.debug(f"Vendor is new [{vendor_check}], adding to formula")
-            sumif_str = f"SUMIF('{vendor_check}'!B:B, A{row}, '{vendor_check}'!J:J),"
-            countif_str = f"COUNTIF('{vendor_check}'!B:B, A{row}),"
+            logger.debug(f"Vendor is new [{vendor}], adding to formula")
+            sumif_str = f"SUMIF('{vendor}'!B:B, A{row}, '{vendor}'!J:J),"
+            countif_str = f"COUNTIF('{vendor}'!B:B, A{row}),"
 
             # add sumif to sum of dividend
             # add countif to sum of divisor
@@ -262,10 +267,10 @@ def update_cat_avg(excel_item, workbook, skips, logger=None):
             workbook[category][f"C{row}"] = full_avg_formula
 
     else:
-        init_formula(excel_item, workbook, skips, logger)
+        init_formula(excel_item, workbook, logger)
 
 
-def init_formula(excel_item, workbook, skips, logger=None, row=None):
+def init_formula(excel_item, workbook, logger=None, row=None):
     """Generate full average formula. Get the row as a check in the book."""
     logger.info("Item is new, adding and initializing formula")
     logger = logger if logger else get_logger("init_formula")
@@ -284,7 +289,7 @@ def init_formula(excel_item, workbook, skips, logger=None, row=None):
     entry_count = ""
 
     try:
-        vendors = [_ for _ in workbook.sheetnames if _ not in skips]
+        vendors = [_ for _ in workbook.sheetnames if _ not in get_skip_list()]
         # Check each vendor for item
         for vendor in vendors:
             items = next(workbook[vendor].iter_cols(2, 2, values_only=True))

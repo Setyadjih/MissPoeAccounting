@@ -100,3 +100,9 @@ def read_categories_file():
             category_dict[key].append(line.replace("\n", ""))
 
     return category_dict
+
+
+def get_skip_list():
+    categories = read_categories_file()
+    skip_list = categories["CATEGORIES"] + categories["MISC"]
+    return skip_list
