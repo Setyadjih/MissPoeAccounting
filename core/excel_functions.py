@@ -1,18 +1,11 @@
 import openpyxl
+from openpyxl.utils import column_index_from_string
 
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles import Font
 
-from core.constants import ExcelItem, AVG_PRICE_FORMULA
+from core.constants import ExcelItem, AVG_PRICE_FORMULA, DATE_FORMAT, COMMA_FORMAT, RP_FORMAT, ITEM_INPUT_FORMAT
 from core.utils import get_logger, get_skip_list
-
-# Today as 30-Mar-19
-DATE_FORMAT = "dd-mmm-yy"
-
-COMMA_FORMAT = "#,##0"
-RP_FORMAT = u'_("Rp"* #,##0_);_("Rp"* (#,##0);_("Rp"* "-"_);_(@_)'
-
-cat_sheets = {"LIST", "ITEM LIST", "Fresh", "Sundries", "Packaging", "Utensils", "Appliances", "Cleaning"}
 
 
 def clean_item_names(vendor_sheet: Worksheet, logger=None):
@@ -166,33 +159,32 @@ def write_to_excel(date, file, excel_item, logger=None):
 
     logger.debug(f"max row = {input_vendor.max_row}, input row = {input_row}")
     logger.debug(f"Appending item data")
+
+    # Generic columns
     input_vendor[f"A{input_row}"] = date
-    input_vendor[f"B{input_row}"] = excel_item.name
-    input_vendor[f"C{input_row}"] = excel_item.brand
-    input_vendor[f"D{input_row}"] = excel_item.quantity
-    input_vendor[f"E{input_row}"] = excel_item.unit
-    input_vendor[f"F{input_row}"] = excel_item.cost
     input_vendor[f"G{input_row}"] = f"=D{input_row}*F{input_row}"
-    input_vendor[f"H{input_row}"] = excel_item.isi
-    input_vendor[f"I{input_row}"] = excel_item.isi_unit
     input_vendor[f"J{input_row}"] = f"=G{input_row}/H{input_row}"
-    input_vendor[f"K{input_row}"] = excel_item.category
+
+    # item specific data
+    for column in ITEM_INPUT_FORMAT.keys():
+        input_vendor[f"{column}{input_row}"] = getattr(excel_item, ITEM_INPUT_FORMAT[column])
+
 
     # format cells for Rupiah
     logger.debug("Assigning format strings")
-    date_cell = input_vendor.cell(input_row, 1)
+    date_cell = input_vendor.cell(input_row, column_index_from_string("A"))
     date_cell.number_format = DATE_FORMAT
 
-    cost_cell = input_vendor.cell(input_row, 6)
+    cost_cell = input_vendor.cell(input_row, column_index_from_string("F"))
     cost_cell.number_format = RP_FORMAT
 
-    total_cell = input_vendor.cell(input_row, 7)
+    total_cell = input_vendor.cell(input_row, column_index_from_string("G"))
     total_cell.number_format = RP_FORMAT
 
-    isi_cell = input_vendor.cell(input_row, 8)
+    isi_cell = input_vendor.cell(input_row, column_index_from_string("H"))
     isi_cell.number_format = COMMA_FORMAT
 
-    per_unit_cell = input_vendor.cell(input_row, 10)
+    per_unit_cell = input_vendor.cell(input_row, column_index_from_string("J"))
     per_unit_cell.number_format = RP_FORMAT
 
     logger.debug(f"Assigning {excel_item.name} to {excel_item.category}")
@@ -203,71 +195,24 @@ def write_to_excel(date, file, excel_item, logger=None):
 
 def update_cat_avg(excel_item, workbook, logger=None):
     """Calculate average price for each item, total quantity, total units
-    Average formula template:
-    SUM(
-        SUMIF('[VENDORSHEET]'!B:B, A[ROW], '[VENDORSHEET]'!J:J),
-        SUMIF('[VENDORSHEET]'!B:B, A[ROW], '[VENDORSHEET]'!J:J),
-        ...
-    )
-    /
-    SUM(
-        COUNTIF('[VENDORSHEET]'!B:B, A[ROW]),
-        COUNTIF('[VENDORSHEET]'!B:B, A[ROW]),
-        ...
-    )
 
-    Note that this assumes J is the price/unit column, and B is the name column
+    Assumes J is the price/unit column, and B is the name column
 
     :param excel_item: ExcelItem with data
     :param workbook: workbook to read from
     :param logger: logger pass through
-    :return: average
     """
-    # Check for item in each ws
-    # for each ws with item, add SUMIF to final formula
-
-    # TODO: Have a "Vendors" named range in a "data" sheet
-    #   Replace Formula with
-    #  =SUMPRODUCT(SUMIF(INDIRECT("'"&Vendors&"'!"&"B:B"),A[ROW], INDIRECT("'"&Vendors&"'!"&"J:J")))
-    #     / SUMPRODUCT(COUNTIF(INDIRECT("'"&Vendors&"'!"&"B:B"), A[ROW]))
-    #  No longer need to count each vendor
-
-
     logger = logger if logger else get_logger("update_cat_average")
 
     category = excel_item.category
-    vendor = excel_item.vendor
-    logger.debug(f"Updating {excel_item.name} in {excel_item.category} with {excel_item.vendor}")
+    logger.debug(f"Checking Item: {excel_item.name} in Category: {excel_item.category}.")
 
     # check if item in list
     cat_items = next(workbook[category].iter_cols(1, 1, values_only=True))
-    if excel_item.name in cat_items:
-        logger.debug("Item exists, checking vendor in formula")
-
-        # compensate for 1 based index
-        row = cat_items.index(excel_item.name) + 1
-        avg_formula: str = workbook[category][f"C{row}"].value
-        if not avg_formula:
-            logger.debug("Item exists, but missing formula; Initializing...")
-            init_formula(excel_item, workbook, logger, row)
-
-        elif vendor in avg_formula:
-            logger.debug("Vendor already in formula")
-
-        else:
-            logger.debug(f"Vendor is new [{vendor}], adding to formula")
-            sumif_str = f"SUMIF('{vendor}'!B:B, A{row}, '{vendor}'!J:J),"
-            countif_str = f"COUNTIF('{vendor}'!B:B, A{row}),"
-
-            # add sumif to sum of dividend
-            # add countif to sum of divisor
-            # Rewrite formula back to wb
-            sumif_formula = avg_formula.replace(")/", f"{sumif_str}) /")
-            full_avg_formula = sumif_formula[:-1] + countif_str + ")"
-            workbook[category][f"C{row}"] = full_avg_formula
-
-    else:
+    if excel_item.name not in cat_items:
         init_formula(excel_item, workbook, logger)
+    else:
+        logger.debug(f"Item: {excel_item.name} already entered.")
 
 
 def init_formula(excel_item, workbook, logger=None, row=None):
