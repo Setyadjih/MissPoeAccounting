@@ -3,7 +3,7 @@ import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles import Font
 
-from core.constants import ExcelItem
+from core.constants import ExcelItem, AVG_PRICE_FORMULA
 from core.utils import get_logger, get_skip_list
 
 # Today as 30-Mar-19
@@ -283,30 +283,7 @@ def init_formula(excel_item, workbook, logger=None, row=None):
         row = workbook[category].max_row
     row = row if row > 3 else 3
 
-    # Iterating through each worksheet to find all vendors with item
-    logger.debug(f"Beginning iteration")
-    price_count = ""
-    entry_count = ""
-
-    try:
-        vendors = [_ for _ in workbook.sheetnames if _ not in get_skip_list()]
-        # Check each vendor for item
-        for vendor in vendors:
-            items = next(workbook[vendor].iter_cols(2, 2, values_only=True))
-            if excel_item.name in items:
-                logger.debug(f"Found item in {vendor}")
-                price_count += f"SUMIF('{vendor}'!B:B, A{row}, '{vendor}'!J:J),"
-                entry_count += f"COUNTIF('{vendor}'!B:B, A{row}),"
-
-        # Combine average formula and apply to workbook
-        avg_formula = f"=SUM({price_count})/SUM({entry_count})"
-        workbook[category][f"C{row}"] = avg_formula
-
-        price_cell_obj = workbook[category].cell(row=row, column=3)
-        price_cell_obj.number_format = RP_FORMAT
-        logger.debug(f"Finished iteration:\n{avg_formula}")
-    except Exception as e:
-        logger.error(f"ERROR: {e}")
+    workbook[category][f"C{row}"] = AVG_PRICE_FORMULA
 
 
 def transfer_records(old_workbook_path, new_workbook_path, categories: dict, logger=None):

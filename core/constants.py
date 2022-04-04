@@ -25,6 +25,9 @@ DEFAULT_CATEGORIES = {
     ],
 }
 
+AVG_PRICE_FORMULA = """ =SUMPRODUCT(SUMIF(INDIRECT("'"&Vendors&"'!"&"B:B"),A[ROW], INDIRECT("'"&Vendors&"'!"&"J:J"))) \
+/ SUMPRODUCT(COUNTIF(INDIRECT("'"&Vendors&"'!"&"B:B"), A[ROW]))
+"""
 
 @dataclass()
 class ExcelItem:
