@@ -44,8 +44,9 @@ def get_file_handler(file_name, log_dir=None):
     if log_dir:
         log_file = os.path.join(log_temp_location, f"{getuser()}_{file_name}_{today}.log")
 
-    file_handler = logging.FileHandler(log_file)
+    file_handler = logging.FileHandler(log_file, 'a', 'utf-8')
     file_handler.setFormatter(FORMATTER)
+    file_handler.encoding = "utf-8"
     return file_handler
 
 

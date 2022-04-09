@@ -2,25 +2,44 @@ from logging import getLogger
 
 import openpyxl
 from openpyxl.utils import column_index_from_string
+from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.styles import Font
 
-from core.constants import ExcelItem, AVG_PRICE_FORMULA, DATE_FORMAT, COMMA_FORMAT, RP_FORMAT, ITEM_INPUT_FORMAT, LOGGER_NAME
+from core.constants import ExcelItem, DATE_FORMAT, COMMA_FORMAT, RP_FORMAT, ITEM_INPUT_FORMAT, LOGGER_NAME
 from core.utils import get_skip_list
+
+
+def create_data_sheet(file, wb: Workbook, vendor_sheets):
+    """Create named range of all vendors to count from"""
+    try:
+        data_sheet: Worksheet = wb["DATA"]
+    except KeyError:
+        wb.create_sheet("DATA")
+        data_sheet = wb["DATA"]
+    for row, vendor in enumerate(vendor_sheets):
+        data_sheet[f"A{row+1}"] = vendor
+    new_range = DefinedName("Vendors", attr_text=f'DATA!$A$1:$A${len(vendor_sheets)}')
+    # Delete and add new named range
+    wb.defined_names.delete("Vendors")
+    wb.defined_names.append(new_range)
+    wb.save(file)
 
 
 def clean_item_names(vendor_sheet: Worksheet):
     """Some entries have extra whitespace. This can mess with the cat entries, so we need to strip the names."""
     logger = getLogger(LOGGER_NAME)
-
-    for row in range(3, vendor_sheet.max_row + 1):
+    logger.debug("Cleaning sheet names.")
+    for row in range(1, vendor_sheet.max_row + 1):
         item_name = vendor_sheet[f"B{row}"].value
         if not item_name:
             continue
 
-        if item_name != item_name.strip():
-            logger.debug(f"'{item_name}' is not clean, stripping to {item_name.strip()}")
-            vendor_sheet[f"B{row}"] = item_name
+        vendor_sheet[f"B{row}"] = item_name.strip()
+
+    logger.debug("Finished Cleaning sheet names.")
+    return vendor_sheet
 
 
 # TODO: test that this works!
@@ -58,22 +77,24 @@ def init_catsheet(file, categories: dict):
 
     # Iterate over all vendor sheets
     vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in skip_list]
+    create_data_sheet(file, input_wb, vendor_sheets)
     logger.debug(f"VENDORS: {vendor_sheets}")
     for sheet_name in vendor_sheets:
         sheet: Worksheet = input_wb[sheet_name]
         logger.info(f"Sheet: {sheet}")
 
-        clean_item_names(sheet)
-        vendor_items = next(sheet.iter_cols(min_col=2, max_col=2, min_row=3, values_only=True))
+        clean_sheet = clean_item_names(sheet)
+        vendor_items = next(clean_sheet.iter_cols(min_col=2, max_col=2, min_row=3, values_only=True))
         for item in vendor_items:
             if not item or item in done_set:
-                logger.debug(f"{item} is done, skipping")
+                if item:
+                    logger.debug(f"{item} is done, skipping")
                 continue
 
             logger.debug(f"Look for '{item}' in {sheet_name}")
             row = vendor_items.index(item) + 3
             logger.debug(f"ROW: {row}, ITEM: {item}")
-            excel_item = row_to_excel_item(sheet, row)
+            excel_item = row_to_excel_item(clean_sheet, row)
 
             # Check if item is already in cat sheet
             category_items = next(input_wb[excel_item.category].iter_cols(1, 1, values_only=True))
@@ -216,12 +237,24 @@ def update_cat_avg(excel_item, workbook):
         logger.debug(f"Item: {excel_item.name} already entered.")
 
 
+def get_avg_price_formula(row):
+    return f"""=SUMPRODUCT(SUMIF(INDIRECT("'"&Vendors&"'!"&"B:B"),A{row}, INDIRECT("'"&Vendors&"'!"&"J:J"))) \
+/ SUMPRODUCT(COUNTIF(INDIRECT("'"&Vendors&"'!"&"B:B"), A{row}))
+"""
+
+
+def get_max_price_formula(row):
+    formula = f"""=MAX(MAXIFS(INDIRECT("'"&Vendors&"'!"&"J:J"), INDIRECT("'"&Vendors&"'!"&"B:B"), A{row}))"""
+    return formula
+
+
 def init_formula(excel_item, workbook, row=None):
     """Generate full average formula. Get the row as a check in the book."""
     logger = getLogger(LOGGER_NAME)
     logger.info("Item is new, adding and initializing formula")
 
     category = excel_item.category
+    ws: Worksheet = workbook[category]
 
     # Set row to given, max_row, or minimum 3
     if not row:
@@ -230,7 +263,12 @@ def init_formula(excel_item, workbook, row=None):
         row = workbook[category].max_row
     row = row if row > 3 else 3
 
-    workbook[category][f"C{row}"] = AVG_PRICE_FORMULA
+    ws[f"C{row}"] = get_avg_price_formula(row)
+    ws[f"C{row}"].number_format = RP_FORMAT
+
+    ws[f"D{row}"] = get_max_price_formula(row)
+    ws.formula_attributes[f"D{row}"] = {'t': 'array', 'ref': f"D{row}:D{row}"}
+    ws[f"D{row}"].number_format = RP_FORMAT
 
 
 def transfer_records(old_workbook_path, new_workbook_path, categories: dict):

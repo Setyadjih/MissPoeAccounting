@@ -1,7 +1,7 @@
 from datetime import date
 from dataclasses import dataclass
 
-APP_VERSION = "v1.0.0"
+APP_VERSION = "v1.1.1"
 DATE = date.today().strftime("%d-%b-%y")
 LOGGER_NAME = "automator.log"
 
@@ -31,9 +31,6 @@ DEFAULT_CATEGORIES = {
     ],
 }
 
-AVG_PRICE_FORMULA = """ =SUMPRODUCT(SUMIF(INDIRECT("'"&Vendors&"'!"&"B:B"),A[ROW], INDIRECT("'"&Vendors&"'!"&"J:J"))) \
-/ SUMPRODUCT(COUNTIF(INDIRECT("'"&Vendors&"'!"&"B:B"), A[ROW]))
-"""
 
 ITEM_INPUT_FORMAT = {
 
