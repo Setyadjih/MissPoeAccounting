@@ -3,15 +3,15 @@ from datetime import datetime
 import shutil
 from pathlib import Path
 
-from PySide2.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication,
     QWidget,
     QTableWidgetItem,
     QFileDialog,
-    QAction,
     QMessageBox,
 )
-from PySide2.QtCore import Qt
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
 from openpyxl import load_workbook
 
 from core.utils import (
@@ -394,4 +394,4 @@ if __name__ == "__main__":
     window = PembelianWidget(test=False)
     window.show()
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

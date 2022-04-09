@@ -5,7 +5,7 @@ import tempfile
 import logging
 from getpass import getuser
 
-from PySide2.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox
 
 from core.constants import CAT_REF, DEFAULT_CATEGORIES
 
