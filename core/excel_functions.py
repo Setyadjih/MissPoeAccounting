@@ -36,7 +36,7 @@ def clean_item_names(vendor_sheet: Worksheet):
         if not item_name:
             continue
 
-        vendor_sheet[f"B{row}"] = item_name.strip()
+        vendor_sheet[f"B{row}"] = str(item_name).strip()
 
     logger.debug("Finished Cleaning sheet names.")
     return vendor_sheet
@@ -80,6 +80,9 @@ def init_catsheet(file, categories: dict):
     create_data_sheet(file, input_wb, vendor_sheets)
     logger.debug(f"VENDORS: {vendor_sheets}")
     for sheet_name in vendor_sheets:
+        if not sheet_name:
+            continue
+
         sheet: Worksheet = input_wb[sheet_name]
         logger.info(f"Sheet: {sheet}")
 
@@ -295,9 +298,9 @@ def transfer_records(old_workbook_path, new_workbook_path, categories: dict):
     # Append missing items to new workbook
     for item_name in old_cat_items.keys():
         if item_name not in new_cat_items.keys():
-            logger.debug(f"Found missing item: {item_name.strip()}")
+            logger.debug(f"Found missing item: {str(item_name).strip()}")
             item_column_details = {
-                "B": item_name.strip(),
+                "B": str(item_name).strip(),
                 "I": old_cat_items[item_name]["unit"],
                 "J": old_cat_items[item_name]["unit_price"],
                 "K": old_cat_items[item_name]["category"],
