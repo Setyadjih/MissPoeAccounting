@@ -75,7 +75,7 @@ class PembelianWidget(QWidget):
         self.ui.confirm_button.setToolTip("Confirm entries to excel")
 
         # Hookup buttons
-        self.ui.new_item_check.clicked.connect(self.item_input_toggle)
+        self.ui.new_item_check.stateChanged.connect(self.item_input_toggle)
         self.ui.add_vendor_button.clicked.connect(self.add_to_table)
         self.ui.file_browse_button.clicked.connect(self.get_excel_sheet)
         self.ui.confirm_button.clicked.connect(self.confirm_table)
@@ -91,8 +91,7 @@ class PembelianWidget(QWidget):
         if not current_cat:
             self.logger.error("Category is empty, could not load items")
             return
-        sorted_list = sorted(self.cat_items_dict[current_cat])
-        self.ui.item_combo.addItems(sorted_list)
+        self.ui.item_combo.addItems(self.cat_items_dict[current_cat])
 
     def item_input_toggle(self):
         """Toggle item input style"""
@@ -205,14 +204,16 @@ class PembelianWidget(QWidget):
             cat_items = []
             try:
                 for row in purchase_book[category].iter_rows(min_row=3, values_only=True):
-                    if row[0]:
-                        cat_items.append(row[0])
-
-                self.cat_items_dict[category] = cat_items
+                    item_name: str = row[0]
+                    if not item_name:
+                        continue
+                    cat_items.append(item_name.strip())
             except KeyError:
                 self.logger.info(f"{category} not in Workbook")
                 bad_cat_index = self.ui.category_combo.findText(category)
                 bad_cats.append(bad_cat_index)
+
+            self.cat_items_dict[category] = sorted(cat_items)
 
         # Remove invalid categories from loaded sheet
         for cat in reversed(sorted(bad_cats)):
@@ -235,6 +236,12 @@ class PembelianWidget(QWidget):
         self.ui.isi_spin.clear()
         self.__set_info("Cleared inputs!", status="done")
 
+    def find_existing_item_category(self, item):
+        for category in self.cat_items_dict.keys():
+            sanitized_items = [item.strip().lower() for item in self.cat_items_dict[category]]
+            if item in sanitized_items:
+                return category
+
     def add_to_table(self):
         # Table entry validation
         if (
@@ -248,6 +255,25 @@ class PembelianWidget(QWidget):
             self.__set_info("Values cannot be 0!", "fail")
             return
 
+        # Check if item already exists in any category
+        if self.ui.new_item_check.isChecked():
+            sanitized_new_item = self.ui.item_line.text().strip().lower()
+            sanitized_items = [item.strip().lower() for item_list in self.cat_items_dict.values() for item in item_list]
+
+            if sanitized_new_item in sanitized_items:
+                self.logger.debug(f"Found pre-existing item {self.ui.item_line.text()}")
+                # Switch to category and select item if exists
+                self.ui.new_item_check.setChecked(False)
+
+                item_category = self.find_existing_item_category(sanitized_new_item)
+                self.ui.category_combo.setCurrentIndex(self.ui.category_combo.findText(item_category))
+                self.logger.debug(f"Found item in {item_category}")
+
+                category_items = [x.strip().lower() for x in self.cat_items_dict[item_category]]
+                item_index = category_items.index(sanitized_new_item)
+                self.logger.debug(f"Found item index: {item_index}")
+                self.ui.item_combo.setCurrentIndex(item_index)
+
         # Commit input to table
         row_count = self.ui.commit_table.rowCount()
         self.ui.commit_table.insertRow(row_count)
@@ -258,7 +284,8 @@ class PembelianWidget(QWidget):
             self.ui.commit_table.setItem(new_row, column, item)
         self.__set_info("Added item to table")
 
-    def get_ui_details(self):
+    def get_ui_details(self) -> tuple:
+        """Get all information from data fields returned as a set"""
         date_text = self.ui.date_line.text()
         date = datetime.strptime(date_text, "%d-%b-%y")
         total_cost = self.ui.qty_spin.value() * self.ui.harga_spin.value()

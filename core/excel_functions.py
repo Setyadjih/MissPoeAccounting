@@ -12,7 +12,7 @@ from core.utils import get_skip_list
 
 
 def create_data_sheet(file, wb: Workbook, vendor_sheets):
-    """Create named range of all vendors to count from"""
+    """Create named range of all vendors to count from. Overwrites any previous data and named range if sheet exists."""
     try:
         data_sheet: Worksheet = wb["DATA"]
     except KeyError:
