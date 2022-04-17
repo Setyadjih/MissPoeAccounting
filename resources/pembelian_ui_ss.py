@@ -8,14 +8,38 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QMetaObject,
-    QObject, QPoint, QRect, QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
-    QFontDatabase, QIcon, QKeySequence, QLinearGradient, QPalette, QPainter,
-    QPixmap, QRadialGradient)
+from PySide6.QtCore import (
+    QCoreApplication,
+    QDate,
+    QDateTime,
+    QMetaObject,
+    QObject,
+    QPoint,
+    QRect,
+    QSize,
+    QTime,
+    QUrl,
+    Qt,
+)
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QConicalGradient,
+    QCursor,
+    QFont,
+    QFontDatabase,
+    QIcon,
+    QKeySequence,
+    QLinearGradient,
+    QPalette,
+    QPainter,
+    QPixmap,
+    QRadialGradient,
+)
 from PySide6.QtWidgets import *
 
 from . import resources_rc
+
 
 class Ui_pembelian(object):
     def setupUi(self, pembelian):
@@ -26,43 +50,45 @@ class Ui_pembelian(object):
         icon = QIcon()
         icon.addFile(u":/Icon/MissPoeVectorExcel.ico", QSize(), QIcon.Normal, QIcon.Off)
         pembelian.setWindowIcon(icon)
-        pembelian.setStyleSheet(u"QWidget#pembelian{	\n"
-"background-color: qlineargradient(spread:pad, x1:0.5, y1:1, x2:0.5, y2:0, stop:0 #b8dbb4, stop:.9 rgba(255, 255, 255, 255));\n"
-"}\n"
-"\n"
-"QFrame#inner_frame{\n"
-"background-color: qlineargradient(spread:pad, x1:0.5, y1:1, x2:0.5, y2:0, stop:0 #e8f5e9, stop:.9 rgba(255, 255, 255, 255));\n"
-"border-radius: 5px\n"
-"}\n"
-"QFrame#inner_frame_3{\n"
-"background-color: qlineargradient(spread:pad, x1:0.5, y1:1, x2:0.5, y2:0, stop:0 #e8f5e9, stop:.9 rgba(255, 255, 255, 255));\n"
-"border-radius: 5px\n"
-"}\n"
-"QPushButton {\n"
-"background-color:#a5d6a7;\n"
-"border:none;\n"
-"border-radius: 2px;\n"
-"min-width: 75px;\n"
-"max-width: 75px;\n"
-"min-height: 20px;\n"
-"max-height: 20px;\n"
-"}\n"
-"QPushButton:hover {\n"
-"background-color:#afe2b2;\n"
-"}\n"
-"QPushButton#file_browse_button{\n"
-"background-color:#75a478;\n"
-"}\n"
-"QPushButton#file_browse_button:hover{\n"
-"background-color:#7eb082;\n"
-"}\n"
-"QPushButton#file_browse_button:Pressed{\n"
-"background-color:#d7ffd9;\n"
-"}\n"
-"QPushButton:Pressed {\n"
-""
-                        "background-color:#d7ffd9;\n"
-"}")
+        pembelian.setStyleSheet(
+            u"QWidget#pembelian{	\n"
+            "background-color: qlineargradient(spread:pad, x1:0.5, y1:1, x2:0.5, y2:0, stop:0 #b8dbb4, stop:.9 rgba(255, 255, 255, 255));\n"
+            "}\n"
+            "\n"
+            "QFrame#inner_frame{\n"
+            "background-color: qlineargradient(spread:pad, x1:0.5, y1:1, x2:0.5, y2:0, stop:0 #e8f5e9, stop:.9 rgba(255, 255, 255, 255));\n"
+            "border-radius: 5px\n"
+            "}\n"
+            "QFrame#inner_frame_3{\n"
+            "background-color: qlineargradient(spread:pad, x1:0.5, y1:1, x2:0.5, y2:0, stop:0 #e8f5e9, stop:.9 rgba(255, 255, 255, 255));\n"
+            "border-radius: 5px\n"
+            "}\n"
+            "QPushButton {\n"
+            "background-color:#a5d6a7;\n"
+            "border:none;\n"
+            "border-radius: 2px;\n"
+            "min-width: 75px;\n"
+            "max-width: 75px;\n"
+            "min-height: 20px;\n"
+            "max-height: 20px;\n"
+            "}\n"
+            "QPushButton:hover {\n"
+            "background-color:#afe2b2;\n"
+            "}\n"
+            "QPushButton#file_browse_button{\n"
+            "background-color:#75a478;\n"
+            "}\n"
+            "QPushButton#file_browse_button:hover{\n"
+            "background-color:#7eb082;\n"
+            "}\n"
+            "QPushButton#file_browse_button:Pressed{\n"
+            "background-color:#d7ffd9;\n"
+            "}\n"
+            "QPushButton:Pressed {\n"
+            ""
+            "background-color:#d7ffd9;\n"
+            "}"
+        )
         self.verticalLayout_6 = QVBoxLayout(pembelian)
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
         self.horizontalLayout_5 = QHBoxLayout()
@@ -143,7 +169,6 @@ class Ui_pembelian(object):
 
         self.verticalLayout.addWidget(self.label_3)
 
-
         self.horizontalLayout.addLayout(self.verticalLayout)
 
         self.input_layout = QVBoxLayout()
@@ -188,7 +213,6 @@ class Ui_pembelian(object):
 
         self.horizontalLayout_2.addWidget(self.new_item_check)
 
-
         self.input_layout.addLayout(self.horizontalLayout_2)
 
         self.horizontalLayout_7 = QHBoxLayout()
@@ -226,7 +250,6 @@ class Ui_pembelian(object):
         self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout_7.addItem(self.horizontalSpacer_4)
-
 
         self.input_layout.addLayout(self.horizontalLayout_7)
 
@@ -272,7 +295,6 @@ class Ui_pembelian(object):
 
         self.horizontalLayout_8.addItem(self.horizontalSpacer_3)
 
-
         self.input_layout.addLayout(self.horizontalLayout_8)
 
         self.merek_line = QLineEdit(self.inner_frame)
@@ -280,9 +302,7 @@ class Ui_pembelian(object):
 
         self.input_layout.addWidget(self.merek_line)
 
-
         self.horizontalLayout.addLayout(self.input_layout)
-
 
         self.verticalLayout_4.addLayout(self.horizontalLayout)
 
@@ -304,9 +324,7 @@ class Ui_pembelian(object):
 
         self.horizontalLayout_4.addWidget(self.add_vendor_button)
 
-
         self.verticalLayout_4.addLayout(self.horizontalLayout_4)
-
 
         self.verticalLayout_5.addLayout(self.verticalLayout_4)
 
@@ -314,12 +332,9 @@ class Ui_pembelian(object):
 
         self.verticalLayout_5.addItem(self.verticalSpacer_2)
 
-
         self.horizontalLayout_6.addLayout(self.verticalLayout_5)
 
-
         self.verticalLayout_2.addWidget(self.inner_frame)
-
 
         self.horizontalLayout_5.addWidget(self.outer_frame)
 
@@ -345,7 +360,7 @@ class Ui_pembelian(object):
         self.verticalLayout_11.setSpacing(0)
         self.verticalLayout_11.setObjectName(u"verticalLayout_11")
         self.commit_table = QTableWidget(self.inner_frame_3)
-        if (self.commit_table.columnCount() < 12):
+        if self.commit_table.columnCount() < 12:
             self.commit_table.setColumnCount(12)
         __qtablewidgetitem = QTableWidgetItem()
         self.commit_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
@@ -429,18 +444,13 @@ class Ui_pembelian(object):
 
         self.horizontalLayout_9.addWidget(self.confirm_button)
 
-
         self.verticalLayout_11.addLayout(self.horizontalLayout_9)
-
 
         self.verticalLayout_10.addLayout(self.verticalLayout_11)
 
-
         self.verticalLayout_9.addWidget(self.inner_frame_3)
 
-
         self.horizontalLayout_5.addWidget(self.outer_frame_2)
-
 
         self.verticalLayout_6.addLayout(self.horizontalLayout_5)
 
@@ -463,7 +473,6 @@ class Ui_pembelian(object):
 
         self.file_browse_layout.addWidget(self.file_browse_button)
 
-
         self.verticalLayout_6.addLayout(self.file_browse_layout)
 
         self.line = QFrame(pembelian)
@@ -478,10 +487,10 @@ class Ui_pembelian(object):
 
         self.verticalLayout_6.addWidget(self.status_bar)
 
-
         self.retranslateUi(pembelian)
 
         QMetaObject.connectSlotsByName(pembelian)
+
     # setupUi
 
     def retranslateUi(self, pembelian):
@@ -514,29 +523,29 @@ class Ui_pembelian(object):
 
         self.add_vendor_button.setText(QCoreApplication.translate("pembelian", u"Add", None))
         ___qtablewidgetitem = self.commit_table.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("pembelian", u"Date", None));
+        ___qtablewidgetitem.setText(QCoreApplication.translate("pembelian", u"Date", None))
         ___qtablewidgetitem1 = self.commit_table.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("pembelian", u"Item", None));
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("pembelian", u"Item", None))
         ___qtablewidgetitem2 = self.commit_table.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("pembelian", u"Vendor", None));
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("pembelian", u"Vendor", None))
         ___qtablewidgetitem3 = self.commit_table.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("pembelian", u"Merek", None));
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("pembelian", u"Merek", None))
         ___qtablewidgetitem4 = self.commit_table.horizontalHeaderItem(4)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("pembelian", u"Quantity", None));
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("pembelian", u"Quantity", None))
         ___qtablewidgetitem5 = self.commit_table.horizontalHeaderItem(5)
-        ___qtablewidgetitem5.setText(QCoreApplication.translate("pembelian", u"Unit", None));
+        ___qtablewidgetitem5.setText(QCoreApplication.translate("pembelian", u"Unit", None))
         ___qtablewidgetitem6 = self.commit_table.horizontalHeaderItem(6)
-        ___qtablewidgetitem6.setText(QCoreApplication.translate("pembelian", u"Harga", None));
+        ___qtablewidgetitem6.setText(QCoreApplication.translate("pembelian", u"Harga", None))
         ___qtablewidgetitem7 = self.commit_table.horizontalHeaderItem(7)
-        ___qtablewidgetitem7.setText(QCoreApplication.translate("pembelian", u"Total", None));
+        ___qtablewidgetitem7.setText(QCoreApplication.translate("pembelian", u"Total", None))
         ___qtablewidgetitem8 = self.commit_table.horizontalHeaderItem(8)
-        ___qtablewidgetitem8.setText(QCoreApplication.translate("pembelian", u"Isi", None));
+        ___qtablewidgetitem8.setText(QCoreApplication.translate("pembelian", u"Isi", None))
         ___qtablewidgetitem9 = self.commit_table.horizontalHeaderItem(9)
-        ___qtablewidgetitem9.setText(QCoreApplication.translate("pembelian", u"Isi Unit", None));
+        ___qtablewidgetitem9.setText(QCoreApplication.translate("pembelian", u"Isi Unit", None))
         ___qtablewidgetitem10 = self.commit_table.horizontalHeaderItem(10)
-        ___qtablewidgetitem10.setText(QCoreApplication.translate("pembelian", u"Harga/Unit", None));
+        ___qtablewidgetitem10.setText(QCoreApplication.translate("pembelian", u"Harga/Unit", None))
         ___qtablewidgetitem11 = self.commit_table.horizontalHeaderItem(11)
-        ___qtablewidgetitem11.setText(QCoreApplication.translate("pembelian", u"Category", None));
+        ___qtablewidgetitem11.setText(QCoreApplication.translate("pembelian", u"Category", None))
         self.import_button.setText(QCoreApplication.translate("pembelian", u"Import Data", None))
         self.init_button.setText(QCoreApplication.translate("pembelian", u"Init Data", None))
         self.test_button.setText(QCoreApplication.translate("pembelian", u"TEST", None))
@@ -544,5 +553,5 @@ class Ui_pembelian(object):
         self.file_select_label.setText(QCoreApplication.translate("pembelian", u"Excel file:", None))
         self.file_browse_button.setText(QCoreApplication.translate("pembelian", u"Browse", None))
         self.status_bar.setText(QCoreApplication.translate("pembelian", u"status bar...", None))
-    # retranslateUi
 
+    # retranslateUi

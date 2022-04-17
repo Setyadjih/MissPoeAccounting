@@ -132,7 +132,7 @@ class PembelianWidget(QWidget):
             "Initializing the category data can take a long time, are you sure"
             " you want to do this?\n The category sheets will be cleared out.",
             QMessageBox.Cancel,
-            QMessageBox.Ok
+            QMessageBox.Ok,
         )
         if result != QMessageBox.Ok:
             return

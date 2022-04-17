@@ -195,7 +195,6 @@ def write_to_excel(date, file, excel_item):
     for column in ITEM_INPUT_FORMAT.keys():
         input_vendor[f"{column}{input_row}"] = getattr(excel_item, ITEM_INPUT_FORMAT[column])
 
-
     # format cells for Rupiah
     logger.debug("Assigning format strings")
     date_cell = input_vendor.cell(input_row, column_index_from_string("A"))
@@ -270,7 +269,7 @@ def init_formula(excel_item, workbook, row=None):
     ws[f"C{row}"].number_format = RP_FORMAT
 
     ws[f"D{row}"] = get_max_price_formula(row)
-    ws.formula_attributes[f"D{row}"] = {'t': 'array', 'ref': f"D{row}:D{row}"}
+    ws.formula_attributes[f"D{row}"] = {"t": "array", "ref": f"D{row}:D{row}"}
     ws[f"D{row}"].number_format = RP_FORMAT
 
 
