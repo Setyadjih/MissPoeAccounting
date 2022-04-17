@@ -31,18 +31,15 @@ DEFAULT_CATEGORIES = {
     ],
 }
 
-
+# Columns A, G, J are reserved for other data
 ITEM_INPUT_FORMAT = {
-
     "B": "name",
     "C": "brand",
     "D": "quantity",
     "E": "unit",
     "F": "cost",
-
     "H": "isi",
     "I": "isi_unit",
-
     "K": "category",
 }
 
