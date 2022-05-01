@@ -292,19 +292,17 @@ def transfer_records(old_workbook_path, new_workbook_path, categories: dict):
     logger.debug("Getting items from old workbook...")
     old_cat_items = get_items_in_category(old_workbook, categories)
     logger.debug("Getting items from new workbook...")
-    new_cat_items = get_items_in_category(new_workbook, categories)
 
-    # Append missing items to new workbook
+    # Append old items to new workbook
     for item_name in old_cat_items.keys():
-        if item_name not in new_cat_items.keys():
-            logger.debug(f"Found missing item: {str(item_name).strip()}")
-            item_column_details = {
-                "B": str(item_name).strip(),
-                "I": old_cat_items[item_name]["unit"],
-                "J": old_cat_items[item_name]["unit_price"],
-                "K": old_cat_items[item_name]["category"],
-            }
-            item_category.append(item_column_details)
+        logger.debug(f"Found old item: {str(item_name).strip()}")
+        item_column_details = {
+            "B": str(item_name).strip(),
+            "I": old_cat_items[item_name]["unit"],
+            "J": old_cat_items[item_name]["unit_price"],
+            "K": old_cat_items[item_name]["category"],
+        }
+        item_category.append(item_column_details)
 
     logger.debug("Saving and beginning init")
     new_workbook_input.save(new_workbook_path)
