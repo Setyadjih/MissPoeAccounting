@@ -1,7 +1,7 @@
 from datetime import date
 from dataclasses import dataclass
 
-APP_VERSION = "v1.2.0"
+APP_VERSION = "v1.2.1"
 DATE = date.today().strftime("%d-%b-%y")
 LOGGER_NAME = "automator.log"
 
