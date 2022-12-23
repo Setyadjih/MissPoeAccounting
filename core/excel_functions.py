@@ -54,14 +54,18 @@ def create_category_sheet(workbook, category):
     new_sheet["A1"].font = Font(bold=True)
     new_sheet.merge_cells("A1:A2")
 
-    new_sheet["B1"] = "UNIT"
+    new_sheet["B1"] = "UNIT BELI"
     new_sheet["B1"].font = Font(bold=True)
     new_sheet.merge_cells("B1:B2")
 
-    new_sheet["C1"] = "MOV AVER"
+    new_sheet["C1"] = "UNIT ISI"
     new_sheet["C1"].font = Font(bold=True)
-    new_sheet["C2"] = "PRICE/UNIT"
-    new_sheet["C2"].font = Font(bold=True)
+    new_sheet.merge_cells("C1:C2")
+
+    new_sheet["D1"] = "MOV AVER"
+    new_sheet["D1"].font = Font(bold=True)
+    new_sheet["D2"] = "PRICE/UNIT"
+    new_sheet["D2"].font = Font(bold=True)
 
 
 def init_catsheet(file, categories: dict):
@@ -157,7 +161,7 @@ def clean_category_sheets(category_dict, input_wb):
         category_sheet.delete_rows(3, max_row)
 
 
-def write_to_excel(date, file, excel_item):
+def write_to_excel(date, file, excel_item: ExcelItem):
     """Write the given data to the purchasing excel sheet
 
     :param str date: date of purchase
@@ -250,7 +254,7 @@ def get_max_price_formula(row):
     return formula
 
 
-def init_formula(excel_item, workbook, row=None):
+def init_formula(excel_item: ExcelItem, workbook, row=None):
     """Generate full average formula. Get the row as a check in the book."""
     logger = getLogger(LOGGER_NAME)
     logger.info("Item is new, adding and initializing formula")
@@ -261,7 +265,7 @@ def init_formula(excel_item, workbook, row=None):
     # Set row to given, max_row, or minimum 3
     if not row:
         logger.debug(f"Creating {category} entry")
-        workbook[category].append({"A": excel_item.name, "B": excel_item.isi_unit})
+        workbook[category].append({"A": excel_item.name, "B": excel_item.unit_beli, "C": excel_item.unit_isi})
         row = workbook[category].max_row
     row = row if row > 3 else 3
 

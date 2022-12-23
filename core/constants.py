@@ -52,8 +52,8 @@ class ExcelItem:
     vendor: str = None
     brand: str = None
     quantity: int = None
-    unit: str = None
+    unit_beli: str = None
     cost: int = None
     isi: int = None
-    isi_unit: str = None
+    unit_isi: str = None
     category: str = None
