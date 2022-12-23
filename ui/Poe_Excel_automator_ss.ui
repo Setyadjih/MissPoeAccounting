@@ -20,7 +20,7 @@
    <string>Form</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/resources.qrc">
+   <iconset>
     <normaloff>:/Icon/MissPoeVectorExcel.ico</normaloff>:/Icon/MissPoeVectorExcel.ico</iconset>
   </property>
   <property name="styleSheet">
@@ -834,8 +834,6 @@ background-color:#d7ffd9;
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../resources/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
