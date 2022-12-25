@@ -272,12 +272,12 @@ def init_formula(excel_item: ExcelItem, workbook, row=None):
         row = workbook[category].max_row
     row = row if row > 3 else 3
 
-    ws[f"C{row}"] = get_avg_price_formula(row)
-    ws[f"C{row}"].number_format = RP_FORMAT
-
-    ws[f"D{row}"] = get_max_price_formula(row)
-    ws.formula_attributes[f"D{row}"] = {"t": "array", "ref": f"D{row}:D{row}"}
+    ws[f"D{row}"] = get_avg_price_formula(row)
     ws[f"D{row}"].number_format = RP_FORMAT
+
+    ws[f"E{row}"] = get_max_price_formula(row)
+    ws.formula_attributes[f"E{row}"] = {"t": "array", "ref": f"E{row}:E{row}"}
+    ws[f"E{row}"].number_format = RP_FORMAT
 
 
 def transfer_records(old_workbook_path, new_workbook_path, categories: dict):
