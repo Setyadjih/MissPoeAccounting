@@ -308,6 +308,9 @@ background-color:#d7ffd9;
                      </item>
                      <item>
                       <widget class="QComboBox" name="unit_combo">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
                        <item>
                         <property name="text">
                          <string>ctn</string>
@@ -429,6 +432,9 @@ background-color:#d7ffd9;
                      </item>
                      <item>
                       <widget class="QComboBox" name="isi_unit_combo">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
                        <item>
                         <property name="text">
                          <string>pcs</string>

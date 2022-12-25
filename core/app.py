@@ -36,7 +36,7 @@ class PembelianWidget(QWidget):
         self.logger = init_logger(LOGGER_NAME)
         self.logger.info("Initializing program")
 
-        self.cat_items_dict = {}
+        self.cat_items_dict: dict[str, list[ExcelItem]] = {}
 
         # Context menu setup
         self.ui.commit_table.setContextMenuPolicy(Qt.ActionsContextMenu)
@@ -75,9 +75,10 @@ class PembelianWidget(QWidget):
         self.ui.confirm_button.setToolTip("Confirm entries to excel")
 
         # Hookup buttons
-        self.ui.new_item_check.stateChanged.connect(self.item_input_toggle)
-        self.ui.add_vendor_button.clicked.connect(self.add_to_table)
         self.ui.file_browse_button.clicked.connect(self.get_excel_sheet)
+        self.ui.new_item_check.stateChanged.connect(self.item_input_toggle)
+        self.ui.item_combo.currentIndexChanged.connect(self.item_unit_lock)
+        self.ui.add_vendor_button.clicked.connect(self.add_to_table)
         self.ui.confirm_button.clicked.connect(self.confirm_table)
         self.ui.init_button.clicked.connect(self.init_cat_button)
         self.ui.import_button.clicked.connect(self.import_data)
@@ -91,17 +92,30 @@ class PembelianWidget(QWidget):
         if not current_cat:
             self.logger.error("Category is empty, could not load items")
             return
-        self.ui.item_combo.addItems(self.cat_items_dict[current_cat])
+
+        for item in self.cat_items_dict[current_cat]:
+            self.ui.item_combo.addItem(item.name, userData=item)
 
     def item_input_toggle(self):
         """Toggle item input style"""
         if self.ui.new_item_check.isChecked():
             self.ui.item_combo.hide()
             self.ui.item_line.show()
+            self.ui.unit_combo.setEnabled(True)
+            self.ui.isi_unit_combo.setEnabled(True)
         else:
             self.ui.item_combo.show()
             self.ui.item_line.hide()
             self.ui.item_line.clear()
+            self.ui.unit_combo.setDisabled(True)
+            self.ui.isi_unit_combo.setDisabled(True)
+
+    def item_unit_lock(self):
+        """Lock item units to preexisting data"""
+        if not self.ui.new_item_check.isChecked():
+            item: ExcelItem = self.ui.item_combo.currentData()
+            self.ui.unit_combo.setCurrentText(item.unit_beli)
+            self.ui.isi_unit_combo.setCurrentText(item.unit_isi)
 
     def test_func(self):
         """Clear out category sheets"""
@@ -204,7 +218,7 @@ class PembelianWidget(QWidget):
             cat_items = []
             try:
                 for row in purchase_book[category].iter_rows(min_row=3, values_only=True):
-                    name = row[0].strip()
+                    name = row[0].strip().lower()
                     # In case of missing item names or empty rows, skip
                     if not name:
                         continue
@@ -240,9 +254,12 @@ class PembelianWidget(QWidget):
 
     def find_existing_item_category(self, item):
         for category in self.cat_items_dict.keys():
-            sanitized_items = [item.strip().lower() for item in self.cat_items_dict[category]]
-            if item in sanitized_items:
+            sanitized_items = [x.name for x in self.cat_items_dict[category]]
+            if item.strip().lower() in sanitized_items:
                 return category
+
+    def unit_lock(self):
+        self.ui.item_combo.data
 
     def add_to_table(self):
         # Table entry validation
