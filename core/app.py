@@ -338,7 +338,7 @@ class PembelianWidget(QWidget):
         return details
 
     def confirm_table(self):
-        """Commit table to excel file"""
+        """Commit table to Excel file"""
         self.logger.info("Executing table to excel file")
 
         file = self.ui.xls_file_browser.text()

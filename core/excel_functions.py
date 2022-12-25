@@ -162,16 +162,16 @@ def clean_category_sheets(category_dict, input_wb):
 
 
 def write_to_excel(date, file, excel_item: ExcelItem):
-    """Write the given data to the purchasing excel sheet
+    """Write the given data to the purchasing Excel sheet.
 
     :param str date: date of purchase
-    :param str file: file path to excel sheet to edit
+    :param str file: file path to Excel sheet to edit
     :param excel_item: ExcelItem with data
     :type excel_item: ExcelItem
     """
     logger = getLogger(LOGGER_NAME)
 
-    # Load excel file path
+    # Load Excel file path
     # Need the data_only=False wb to save formula
     input_wb = openpyxl.load_workbook(file, data_only=False)
 
@@ -223,10 +223,8 @@ def write_to_excel(date, file, excel_item: ExcelItem):
 
 
 def update_cat_avg(excel_item, workbook):
-    """Calculate average price for each item, total quantity, total units
-
+    """Calculate average price for each item, total quantity, total units.
     Assumes J is the price/unit column, and B is the name column
-
     :param excel_item: ExcelItem with data
     :param workbook: workbook to read from
     """
