@@ -204,16 +204,18 @@ class PembelianWidget(QWidget):
             cat_items = []
             try:
                 for row in purchase_book[category].iter_rows(min_row=3, values_only=True):
-                    item_name: str = row[0]
-                    if not item_name:
+                    name = row[0].strip()
+                    # In case of missing item names or empty rows, skip
+                    if not name:
                         continue
-                    cat_items.append(item_name.strip())
+
+                    cat_items.append(ExcelItem(name=name, unit_beli=row[1], unit_isi=row[2]))
             except KeyError:
                 self.logger.info(f"{category} not in Workbook")
                 bad_cat_index = self.ui.category_combo.findText(category)
                 bad_cats.append(bad_cat_index)
 
-            self.cat_items_dict[category] = sorted(cat_items)
+            self.cat_items_dict[category] = sorted(cat_items, key=lambda item: item.name)
 
         # Remove invalid categories from loaded sheet
         for cat in reversed(sorted(bad_cats)):
