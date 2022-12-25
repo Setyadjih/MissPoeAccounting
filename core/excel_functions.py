@@ -253,8 +253,7 @@ def get_avg_price_formula(row):
 
 
 def get_max_price_formula(row):
-    formula = f"""=MAX(MAXIFS(INDIRECT("'"&Vendors&"'!"&"J:J"), INDIRECT("'"&Vendors&"'!"&"B:B"), A{row}))"""
-    return formula
+    return f"""=MAX(MAXIFS(INDIRECT("'"&Vendors&"'!"&"J:J"), INDIRECT("'"&Vendors&"'!"&"B:B"), A{row}))"""
 
 
 def init_formula(excel_item: ExcelItem, workbook, row=None):
