@@ -125,13 +125,18 @@ def row_to_excel_item(sheet: Worksheet, row):
 
     # Guard against missing units
     try:
-        isi_unit = sheet[f"I{row}"].value
-        if not isi_unit:
-            isi_unit = sheet[f"E{row}"].value
+        unit_isi = sheet[f"I{row}"].value
+        if not unit_isi:
+            unit_isi = sheet[f"E{row}"].value
     except IndexError:
-        logger.error("Isi error, assigning g")
-        isi_unit = "g"
+        logger.error("Isi unit error, assigning g")
+        unit_isi = "g"
 
+    try:
+        unit_beli = sheet[f"E{row}"].value
+    except IndexError:
+        logger.error("Beli unit error, assigning g")
+        unit_beli = "g"
     # Check for common typos in categories
     try:
         category_value: str = sheet[f"K{row}"].value
@@ -140,7 +145,7 @@ def row_to_excel_item(sheet: Worksheet, row):
         category_value = "Fresh"
 
     logger.debug(f"Category: {category_value}")
-    return ExcelItem(name=item_name, vendor=sheet_title, isi_unit=isi_unit, category=category_value)
+    return ExcelItem(name=item_name, vendor=sheet_title, unit_isi=unit_isi, unit_beli=unit_beli, category=category_value)
 
 
 def clean_category_sheets(category_dict, input_wb):
