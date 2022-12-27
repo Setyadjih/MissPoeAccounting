@@ -23,7 +23,7 @@ from core.utils import (
 )
 from resources.pembelian_ui_ss import Ui_pembelian
 from core.excel_functions import write_to_excel, init_catsheet, transfer_records
-from core.constants import APP_VERSION, DATE, CAT_REF, ExcelItem, LOGGER_NAME
+from core.constants import APP_VERSION, DATE, CAT_REF, ExcelItem, LOGGER_NAME, Status
 
 
 # noinspection SpellCheckingInspection
@@ -107,8 +107,6 @@ class PembelianWidget(QWidget):
             self.ui.item_combo.show()
             self.ui.item_line.hide()
             self.ui.item_line.clear()
-            self.ui.unit_combo.setDisabled(True)
-            self.ui.isi_unit_combo.setDisabled(True)
 
     def item_unit_lock(self):
         """Lock item units to preexisting data"""
@@ -148,7 +146,7 @@ class PembelianWidget(QWidget):
         """Start initialization of category sheets"""
         file = self.ui.xls_file_browser.text()
         if not file:
-            self.__set_info("No file to write to!", "fail")
+            self.__set_info("No file to write to!", Status.FAIL)
             return
 
         result = QMessageBox.warning(
@@ -168,30 +166,30 @@ class PembelianWidget(QWidget):
             init_catsheet(file, self.categories)
         except Exception as e:
             self.logger.error(e)
-            self.__set_info(f"Failed to init data! Error: {e}", "fail")
+            self.__set_info(f"Failed to init data! Error: {e}", Status.FAIL)
             return
         self.logger.info("Finished init")
-        self.__set_info("All done!", "done")
+        self.__set_info("All done!", Status.DONE)
 
     def import_data(self):
         """Import data from previous workbook to current active workbook"""
         new_workbook = self.ui.xls_file_browser.text()
         if not new_workbook:
-            self.__set_info("Please select Workbook to import to!", "fail")
+            self.__set_info("Please select Workbook to import to!", Status.FAIL)
 
         try:
             old_workbook = QFileDialog.getOpenFileName(filter="Old Workbook (*.xlsx)")[0]
         except KeyError as error:
-            self.__set_info(f"Failed to pick sheet! Vendor doesn't exist.", "fail")
+            self.__set_info(f"Failed to pick sheet! Vendor doesn't exist.", Status.FAIL)
             self.logger.error(error)
             return
         except Exception as error:
-            self.__set_info(f"Failed to pick sheet! Reason: {error}", "fail")
+            self.__set_info(f"Failed to pick sheet! Reason: {error}", Status.FAIL)
             self.logger.error(error)
             return
         self.__set_info("Transferring records...")
         transfer_records(old_workbook, new_workbook, self.categories)
-        self.__set_info("Done Transferring!", "done")
+        self.__set_info("Done Transferring!", Status.DONE)
 
     def delete_table_row(self):
         current_row = self.ui.commit_table.currentRow()
@@ -202,18 +200,18 @@ class PembelianWidget(QWidget):
         try:
             file_dir = QFileDialog.getOpenFileName(filter="Excel sheets (*.xlsx)")[0]
         except KeyError as error:
-            self.__set_info(f"Failed to pick sheet! Vendor doesn't exist.", "fail")
+            self.__set_info(f"Failed to pick sheet! Vendor doesn't exist.", Status.FAIL)
             self.logger.error(error)
             return
         except Exception as error:
-            self.__set_info(f"Failed to pick sheet! Reason: {error}", "fail")
+            self.__set_info(f"Failed to pick sheet! Reason: {error}", Status.FAIL)
             self.logger.error(error)
             return
 
         # File check
         self.ui.xls_file_browser.setText(file_dir)
         if not self.ui.xls_file_browser.text():
-            self.__set_info("Did not get file path", "fail")
+            self.__set_info("Did not get file path", Status.FAIL)
             return
 
         # Populate vendor drop down
@@ -265,7 +263,7 @@ class PembelianWidget(QWidget):
         self.ui.qty_spin.clear()
         self.ui.harga_spin.clear()
         self.ui.isi_spin.clear()
-        self.__set_info("Cleared inputs!", status="done")
+        self.__set_info("Cleared inputs!", status=Status.DONE)
 
     def find_existing_item_category(self, item):
         for category in self.cat_items_dict.keys():
@@ -283,7 +281,7 @@ class PembelianWidget(QWidget):
             or not self.ui.isi_unit_combo.currentText()
             or not self.ui.vendor_combo.currentText()
         ):
-            self.__set_info("Values cannot be 0!", "fail")
+            self.__set_info("Values cannot be 0!", Status.FAIL)
             return
 
         # Check if item already exists in any category
@@ -372,7 +370,7 @@ class PembelianWidget(QWidget):
 
         file = self.ui.xls_file_browser.text()
         if not file:
-            self.__set_info("No file to write to!", "fail")
+            self.__set_info("No file to write to!", Status.FAIL)
             return
 
         if self.ui.commit_table.rowCount() == 0:
@@ -394,14 +392,14 @@ class PembelianWidget(QWidget):
                 self.__set_info("Writing to Excel sheet...")
                 write_to_excel(date, file, excel_item)
             except Exception as error:
-                self.__set_info(f"Failed writing to excel sheet! Reason: {error}", "fail")
+                self.__set_info(f"Failed writing to excel sheet! Reason: {error}", Status.FAIL)
                 self.logger.error(f"Failed on " f"{self.ui.commit_table.item(row, 1)}")
                 self.logger.error(f"Error: {error}")
                 return
 
         self.clean_table()
         self.logger.debug("Finished writing")
-        self.__set_info("All done writing!", status="done")
+        self.__set_info("All done writing!", status=Status.DONE)
 
     def create_excel_item(self, row):
         excel_item = ExcelItem()
@@ -421,7 +419,7 @@ class PembelianWidget(QWidget):
         for row in reversed(range(self.ui.commit_table.rowCount())):
             self.ui.commit_table.removeRow(row)
 
-    def __set_info(self, message, status=""):
+    def __set_info(self, message, status: Status = Status.DEFAULT):
         """Display the info on the GUI
 
         done: green,
@@ -433,12 +431,7 @@ class PembelianWidget(QWidget):
         :param status: status of the message which effects the color of text
         :type status: str
         """
-        if status == "fail":
-            color = "red"
-        elif status == "done":
-            color = "#00ff06"  # bright green
-        else:
-            color = "#00b2ff"  # bright blue
+        color = status.value
 
         self.ui.status_bar.setText(message)
         self.ui.status_bar.setStyleSheet("color: {}".format(color))

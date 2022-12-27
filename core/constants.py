@@ -1,5 +1,6 @@
 from datetime import date
 from dataclasses import dataclass
+from enum import Enum
 
 APP_VERSION = "v1.2.1"
 DATE = date.today().strftime("%d-%b-%y")
@@ -57,3 +58,9 @@ class ExcelItem:
     isi: int = None
     unit_isi: str = None
     category: str = None
+
+
+class Status(Enum):
+    FAIL = "red"
+    DONE = "#00ff06"  # bright green
+    DEFAULT = "#00b2ff"  # bright blue
