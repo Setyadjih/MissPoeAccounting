@@ -42,7 +42,6 @@ def clean_item_names(vendor_sheet: Worksheet):
     return vendor_sheet
 
 
-# TODO: test that this works!
 def create_category_sheet(workbook, category):
     logger = getLogger(LOGGER_NAME)
     logger.info(f"Creating {category} in workbook")
@@ -304,7 +303,8 @@ def transfer_records(old_workbook_path, new_workbook_path, categories: dict):
         logger.debug(f"Found old item: {str(item_name).strip()}")
         item_column_details = {
             "B": str(item_name).strip(),
-            "I": old_cat_items[item_name]["unit"],
+            "E": old_cat_items[item_name]["unit_beli"],
+            "I": old_cat_items[item_name]["unit_isi"],
             "J": old_cat_items[item_name]["unit_price"],
             "K": old_cat_items[item_name]["category"],
         }
@@ -332,8 +332,9 @@ def get_items_in_category(workbook, categories):
             item = {
                 "category": category,
                 "name": category_sheet[f"A{row}"].value,
-                "unit": category_sheet[f"B{row}"].value,
-                "unit_price": category_sheet[f"C{row}"].value,
+                "unit_beli": category_sheet[f"B{row}"].value,
+                "unit_isi": category_sheet[f"C{row}"].value,
+                "unit_price": category_sheet[f"D{row}"].value,
             }
             category_items[item["name"]] = item
 
