@@ -114,8 +114,19 @@ class PembelianWidget(QWidget):
         """Lock item units to preexisting data"""
         if not self.ui.new_item_check.isChecked():
             item: ExcelItem = self.ui.item_combo.currentData()
-            self.ui.unit_combo.setCurrentText(item.unit_beli)
-            self.ui.isi_unit_combo.setCurrentText(item.unit_isi)
+            if item.unit_beli != "NA":
+                self.ui.unit_combo.setCurrentText(item.unit_beli)
+                self.ui.unit_combo.setDisabled(True)
+            else:
+                self.ui.unit_combo.setEnabled(True)
+                self.__set_info("Missing Beli unit, please select", )
+
+            if item.unit_isi != "NA":
+                self.ui.isi_unit_combo.setCurrentText(item.unit_isi)
+                self.ui.isi_unit_combo.setDisabled(True)
+            else:
+                self.ui.unit_combo.setEnabled(True)
+
 
     def test_func(self):
         """Clear out category sheets"""
@@ -223,7 +234,11 @@ class PembelianWidget(QWidget):
                     if not name:
                         continue
 
-                    cat_items.append(ExcelItem(name=name, unit_beli=row[1], unit_isi=row[2]))
+                    # Guard against missing units
+                    unit_beli = row[1] if row[1] else "NA"
+                    unit_isi = row[2] if row[2] else "NA"
+
+                    cat_items.append(ExcelItem(name=name, unit_beli=unit_beli, unit_isi=unit_isi))
             except KeyError:
                 self.logger.info(f"{category} not in Workbook")
                 bad_cat_index = self.ui.category_combo.findText(category)
@@ -257,9 +272,6 @@ class PembelianWidget(QWidget):
             sanitized_items = [x.name for x in self.cat_items_dict[category]]
             if item.strip().lower() in sanitized_items:
                 return category
-
-    def unit_lock(self):
-        self.ui.item_combo.data
 
     def add_to_table(self):
         # Table entry validation
