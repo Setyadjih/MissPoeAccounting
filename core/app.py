@@ -112,19 +112,12 @@ class PembelianWidget(QWidget):
         """Lock item units to preexisting data"""
         if not self.ui.new_item_check.isChecked():
             item: ExcelItem = self.ui.item_combo.currentData()
-            if item.unit_beli != "NA":
-                self.ui.unit_combo.setCurrentText(item.unit_beli)
-                self.ui.unit_combo.setDisabled(True)
-            else:
-                self.ui.unit_combo.setEnabled(True)
-                self.__set_info("Missing Beli unit, please select", )
 
             if item.unit_isi != "NA":
                 self.ui.isi_unit_combo.setCurrentText(item.unit_isi)
                 self.ui.isi_unit_combo.setDisabled(True)
             else:
-                self.ui.unit_combo.setEnabled(True)
-
+                self.ui.isi_unit_combo.setEnabled(True)
 
     def test_func(self):
         """Clear out category sheets"""

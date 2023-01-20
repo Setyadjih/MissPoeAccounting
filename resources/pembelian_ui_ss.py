@@ -224,7 +224,7 @@ class Ui_pembelian(object):
         self.unit_combo.addItem("")
         self.unit_combo.addItem("")
         self.unit_combo.setObjectName(u"unit_combo")
-        self.unit_combo.setEnabled(False)
+        self.unit_combo.setEnabled(True)
 
         self.horizontalLayout_7.addWidget(self.unit_combo)
 
