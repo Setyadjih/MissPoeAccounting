@@ -62,5 +62,5 @@ class ExcelItem:
 
 class Status(Enum):
     FAIL = "red"
-    DONE = "#00ff06"  # bright green
+    DONE = "#596956"  # Dark green
     DEFAULT = "#00b2ff"  # bright blue
