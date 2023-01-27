@@ -280,7 +280,7 @@ class PembelianWidget(QWidget):
         # Check if item already exists in any category
         if self.ui.new_item_check.isChecked():
             sanitized_new_item = self.ui.item_line.text().strip().lower()
-            sanitized_items = [item.strip().lower() for item_list in self.cat_items_dict.values() for item in item_list]
+            sanitized_items = [item.name.strip().lower() for item_list in self.cat_items_dict.values() for item in item_list]
 
             if sanitized_new_item in sanitized_items:
                 self.logger.debug(f"Found pre-existing item {self.ui.item_line.text()}")
@@ -291,7 +291,7 @@ class PembelianWidget(QWidget):
                 self.ui.category_combo.setCurrentIndex(self.ui.category_combo.findText(item_category))
                 self.logger.debug(f"Found item in {item_category}")
 
-                category_items = [x.strip().lower() for x in self.cat_items_dict[item_category]]
+                category_items = [x.name.strip().lower() for x in self.cat_items_dict[item_category]]
                 item_index = category_items.index(sanitized_new_item)
                 self.logger.debug(f"Found item index: {item_index}")
                 self.ui.item_combo.setCurrentIndex(item_index)
