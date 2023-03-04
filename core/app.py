@@ -22,7 +22,7 @@ from core.utils import (
     get_skip_list,
 )
 from resources.pembelian_ui_ss import Ui_pembelian
-from core.excel_functions import write_to_excel, init_catsheet, transfer_records
+from core.excel_functions import write_to_excel, init_catsheet, import_records
 from core.constants import APP_VERSION, DATE, CAT_REF, ExcelItem, LOGGER_NAME
 
 
@@ -165,7 +165,7 @@ class PembelianWidget(QWidget):
             self.logger.error(error)
             return
         self.__set_info("Transferring records...")
-        transfer_records(old_workbook, new_workbook, self.categories)
+        import_records(old_workbook, new_workbook, self.categories)
         self.__set_info("Done Transferring!", "done")
 
     def delete_table_row(self):

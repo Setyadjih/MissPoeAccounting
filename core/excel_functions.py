@@ -36,7 +36,7 @@ def clean_item_names(vendor_sheet: Worksheet):
         if not item_name:
             continue
 
-        vendor_sheet[f"B{row}"] = str(item_name).strip()
+        vendor_sheet[f"B{row}"] = str(item_name).strip().capitalize()
 
     logger.debug("Finished Cleaning sheet names.")
     return vendor_sheet
@@ -273,15 +273,19 @@ def init_formula(excel_item, workbook, row=None):
     ws[f"D{row}"].number_format = RP_FORMAT
 
 
-def transfer_records(old_workbook_path, new_workbook_path, categories: dict):
+def import_records(old_workbook_path, new_workbook_path, categories: dict):
     """Check entries from old to new, append any missing to new"""
     logger = getLogger(LOGGER_NAME)
 
     old_workbook = openpyxl.load_workbook(old_workbook_path, data_only=True)
     new_workbook = openpyxl.load_workbook(new_workbook_path, data_only=True)
     new_workbook_input = openpyxl.load_workbook(new_workbook_path, data_only=False)
+
     try:
-        # Use old wb name as a fake vendor
+        # Clear out old sheet if exists
+        item_category = new_workbook_input["_IMPORT_"]
+        new_workbook_input.remove(item_category)
+        new_workbook_input.create_sheet("_IMPORT_")
         item_category = new_workbook_input["_IMPORT_"]
     except KeyError:
         new_workbook_input.create_sheet("_IMPORT_")
