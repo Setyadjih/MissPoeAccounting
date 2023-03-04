@@ -1,7 +1,8 @@
 from datetime import date
 from dataclasses import dataclass
+from enum import Enum
 
-APP_VERSION = "v1.3.0"
+APP_VERSION = "v1.3.3"
 DATE = date.today().strftime("%d-%b-%y")
 LOGGER_NAME = "automator.log"
 
@@ -52,8 +53,14 @@ class ExcelItem:
     vendor: str = None
     brand: str = None
     quantity: int = None
-    unit: str = None
+    unit_beli: str = None
     cost: int = None
     isi: int = None
-    isi_unit: str = None
+    unit_isi: str = None
     category: str = None
+
+
+class Status(Enum):
+    FAIL = "red"
+    DONE = "#596956"  # Dark green
+    DEFAULT = "#00b2ff"  # bright blue

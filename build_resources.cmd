@@ -1,1 +1,1 @@
-pyside2-rcc resources\resources.qrc > resources\resources_rc.py
+pyside6-rcc resources\resources.qrc > resources\resources_rc.py

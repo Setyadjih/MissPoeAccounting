@@ -42,7 +42,6 @@ def clean_item_names(vendor_sheet: Worksheet):
     return vendor_sheet
 
 
-# TODO: test that this works!
 def create_category_sheet(workbook, category):
     logger = getLogger(LOGGER_NAME)
     logger.info(f"Creating {category} in workbook")
@@ -54,14 +53,18 @@ def create_category_sheet(workbook, category):
     new_sheet["A1"].font = Font(bold=True)
     new_sheet.merge_cells("A1:A2")
 
-    new_sheet["B1"] = "UNIT"
+    new_sheet["B1"] = "UNIT BELI"
     new_sheet["B1"].font = Font(bold=True)
     new_sheet.merge_cells("B1:B2")
 
-    new_sheet["C1"] = "MOV AVER"
+    new_sheet["C1"] = "UNIT ISI"
     new_sheet["C1"].font = Font(bold=True)
-    new_sheet["C2"] = "PRICE/UNIT"
-    new_sheet["C2"].font = Font(bold=True)
+    new_sheet.merge_cells("C1:C2")
+
+    new_sheet["D1"] = "MOV AVER"
+    new_sheet["D1"].font = Font(bold=True)
+    new_sheet["D2"] = "PRICE/UNIT"
+    new_sheet["D2"].font = Font(bold=True)
 
 
 def init_catsheet(file, categories: dict):
@@ -121,13 +124,18 @@ def row_to_excel_item(sheet: Worksheet, row):
 
     # Guard against missing units
     try:
-        isi_unit = sheet[f"I{row}"].value
-        if not isi_unit:
-            isi_unit = sheet[f"E{row}"].value
+        unit_isi = sheet[f"I{row}"].value
+        if not unit_isi:
+            unit_isi = sheet[f"E{row}"].value
     except IndexError:
-        logger.error("Isi error, assigning g")
-        isi_unit = "g"
+        logger.error("Isi unit error, assigning g")
+        unit_isi = "g"
 
+    try:
+        unit_beli = sheet[f"E{row}"].value
+    except IndexError:
+        logger.error("Beli unit error, assigning g")
+        unit_beli = "g"
     # Check for common typos in categories
     try:
         category_value: str = sheet[f"K{row}"].value
@@ -136,7 +144,7 @@ def row_to_excel_item(sheet: Worksheet, row):
         category_value = "Fresh"
 
     logger.debug(f"Category: {category_value}")
-    return ExcelItem(name=item_name, vendor=sheet_title, isi_unit=isi_unit, category=category_value)
+    return ExcelItem(name=item_name, vendor=sheet_title, unit_isi=unit_isi, unit_beli=unit_beli, category=category_value)
 
 
 def clean_category_sheets(category_dict, input_wb):
@@ -157,17 +165,17 @@ def clean_category_sheets(category_dict, input_wb):
         category_sheet.delete_rows(3, max_row)
 
 
-def write_to_excel(date, file, excel_item):
-    """Write the given data to the purchasing excel sheet
+def write_to_excel(date, file, excel_item: ExcelItem):
+    """Write the given data to the purchasing Excel sheet.
 
     :param str date: date of purchase
-    :param str file: file path to excel sheet to edit
+    :param str file: file path to Excel sheet to edit
     :param excel_item: ExcelItem with data
     :type excel_item: ExcelItem
     """
     logger = getLogger(LOGGER_NAME)
 
-    # Load excel file path
+    # Load Excel file path
     # Need the data_only=False wb to save formula
     input_wb = openpyxl.load_workbook(file, data_only=False)
 
@@ -219,10 +227,8 @@ def write_to_excel(date, file, excel_item):
 
 
 def update_cat_avg(excel_item, workbook):
-    """Calculate average price for each item, total quantity, total units
-
+    """Calculate average price for each item, total quantity, total units.
     Assumes J is the price/unit column, and B is the name column
-
     :param excel_item: ExcelItem with data
     :param workbook: workbook to read from
     """
@@ -249,7 +255,7 @@ def get_max_price_formula(row):
     return f"""=MAX(MAXIFS(INDIRECT("'"&Vendors&"'!"&"J:J"), INDIRECT("'"&Vendors&"'!"&"B:B"), A{row}))"""
 
 
-def init_formula(excel_item, workbook, row=None):
+def init_formula(excel_item: ExcelItem, workbook, row=None):
     """Generate full average formula. Get the row as a check in the book."""
     logger = getLogger(LOGGER_NAME)
     logger.info("Item is new, adding and initializing formula")
@@ -260,17 +266,16 @@ def init_formula(excel_item, workbook, row=None):
     # Set row to given, max_row, or minimum 3
     if not row:
         logger.debug(f"Creating {category} entry")
-        workbook[category].append({"A": excel_item.name, "B": excel_item.isi_unit})
+        workbook[category].append({"A": excel_item.name, "B": excel_item.unit_beli, "C": excel_item.unit_isi})
         row = workbook[category].max_row
     row = row if row > 3 else 3
 
-    ws[f"C{row}"] = get_avg_price_formula(row)
-    # ws.formula_attributes[f"C{row}"] = {"t": "array", "ref": f"C{row}:C{row}"}
-    ws[f"C{row}"].number_format = RP_FORMAT
-
-    ws[f"D{row}"] = get_max_price_formula(row)
-    # ws.formula_attributes[f"D{row}"] = {"t": "array", "ref": f"D{row}:D{row}"}
+    ws[f"D{row}"] = get_avg_price_formula(row)
     ws[f"D{row}"].number_format = RP_FORMAT
+
+    ws[f"E{row}"] = get_max_price_formula(row)
+    ws.formula_attributes[f"E{row}"] = {"t": "array", "ref": f"E{row}:E{row}"}
+    ws[f"E{row}"].number_format = RP_FORMAT
 
 
 def import_records(old_workbook_path, new_workbook_path, categories: dict):
@@ -302,7 +307,8 @@ def import_records(old_workbook_path, new_workbook_path, categories: dict):
         logger.debug(f"Found old item: {str(item_name).strip()}")
         item_column_details = {
             "B": str(item_name).strip(),
-            "I": old_cat_items[item_name]["unit"],
+            "E": old_cat_items[item_name]["unit_beli"],
+            "I": old_cat_items[item_name]["unit_isi"],
             "J": old_cat_items[item_name]["unit_price"],
             "K": old_cat_items[item_name]["category"],
         }
@@ -330,8 +336,9 @@ def get_items_in_category(workbook, categories):
             item = {
                 "category": category,
                 "name": category_sheet[f"A{row}"].value,
-                "unit": category_sheet[f"B{row}"].value,
-                "unit_price": category_sheet[f"C{row}"].value,
+                "unit_beli": category_sheet[f"B{row}"].value,
+                "unit_isi": category_sheet[f"C{row}"].value,
+                "unit_price": category_sheet[f"D{row}"].value,
             }
             category_items[item["name"]] = item
 
