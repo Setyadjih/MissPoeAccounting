@@ -246,8 +246,7 @@ def get_avg_price_formula(row):
 
 
 def get_max_price_formula(row):
-    formula = f"""=MAX(MAXIFS(INDIRECT("'"&Vendors&"'!"&"J:J"), INDIRECT("'"&Vendors&"'!"&"B:B"), A{row}))"""
-    return formula
+    return f"""=MAX(MAXIFS(INDIRECT("'"&Vendors&"'!"&"J:J"), INDIRECT("'"&Vendors&"'!"&"B:B"), A{row}))"""
 
 
 def init_formula(excel_item, workbook, row=None):
@@ -266,10 +265,11 @@ def init_formula(excel_item, workbook, row=None):
     row = row if row > 3 else 3
 
     ws[f"C{row}"] = get_avg_price_formula(row)
+    # ws.formula_attributes[f"C{row}"] = {"t": "array", "ref": f"C{row}:C{row}"}
     ws[f"C{row}"].number_format = RP_FORMAT
 
     ws[f"D{row}"] = get_max_price_formula(row)
-    ws.formula_attributes[f"D{row}"] = {"t": "array", "ref": f"D{row}:D{row}"}
+    # ws.formula_attributes[f"D{row}"] = {"t": "array", "ref": f"D{row}:D{row}"}
     ws[f"D{row}"].number_format = RP_FORMAT
 
 
