@@ -220,7 +220,7 @@ class PembelianWidget(QWidget):
             cat_items = []
             try:
                 for row in purchase_book[category].iter_rows(min_row=3, values_only=True):
-                    name = row[0].strip().lower()
+                    name = row[0].strip()
                     # In case of missing item names or empty rows, skip
                     if not name:
                         continue
