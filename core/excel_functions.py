@@ -13,14 +13,17 @@ from core.utils import get_skip_list
 
 def create_data_sheet(file, wb: Workbook, vendor_sheets):
     """Create named range of all vendors to count from. Overwrites any previous data and named range if sheet exists."""
-    try:
-        data_sheet: Worksheet = wb["DATA"]
-    except KeyError:
-        wb.create_sheet("DATA")
-        data_sheet = wb["DATA"]
+    logger = getLogger(LOGGER_NAME)
+    if "DATA" in wb.sheetnames:
+        logger.debug("Clearing old DATA sheet")
+        wb.remove(wb["DATA"])
+    logger.debug("Creating DATA")
+    data_sheet = wb.create_sheet("DATA")
+
     for row, vendor in enumerate(vendor_sheets):
         data_sheet[f"A{row+1}"] = vendor
     new_range = DefinedName("Vendors", attr_text=f'DATA!$A$1:$A${len(vendor_sheets)}')
+    logger.debug(f"Created Vendor range: DATA!$A$1:$A${len(vendor_sheets)}")
     # Delete and add new named range
     wb.defined_names.delete("Vendors")
     wb.defined_names.append(new_range)
@@ -73,13 +76,14 @@ def init_catsheet(file, categories: dict):
     # Due to openpyxl's structure, we need the data_only=False wb to save formula
     input_wb = openpyxl.load_workbook(file, data_only=False)
     clean_category_sheets(categories, input_wb)
-
+    logger.debug("Finished Clearing Category Sheets")
     # default dict
     done_set = {"None", " "}
     skip_list = get_skip_list()
-
+    logger.debug(f"Skip List: {skip_list}")
     # Iterate over all vendor sheets
     vendor_sheets = [_ for _ in input_wb.sheetnames if _ not in skip_list]
+    logger.debug("Creating Datasheet")
     create_data_sheet(file, input_wb, vendor_sheets)
     logger.debug(f"VENDORS: {vendor_sheets}")
     for sheet_name in vendor_sheets:
