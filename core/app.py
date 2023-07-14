@@ -1,7 +1,9 @@
 import sys
+import time
 from datetime import datetime
 import shutil
 from pathlib import Path
+import subprocess
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -13,6 +15,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 from openpyxl import load_workbook
+import pyautogui
 
 from core.utils import (
     init_logger,
@@ -163,6 +166,33 @@ class PembelianWidget(QWidget):
             return
         self.logger.info("Finished init")
         self.__set_info("All done!", Status.DONE)
+        subprocess.run(["start", "excel", file], shell=True)
+        result = QMessageBox.information(self, "Loading File..", "Please Hit OK when file is loaded, then do not touch anything")
+        if result != QMessageBox.Ok:
+            self.__set_info("Canceled auto cleaning.")
+            return
+
+        self.__set_info("Start cleaning!")
+        self.logger.info("Start cleaning!")
+        self.logger.debug(f"finding window with title: {file.title().split('/')[-1]} - Excel")
+        pyautogui.getWindowsWithTitle("Pembelian")[0].activate()
+
+        # Hacky as hell gui automation to fix excel formulas
+        for cat in self.categories["CATEGORIES"]:
+            self.logger.info(f"Cleaning {cat} Max!")
+            pyautogui.press("f5")
+            pyautogui.write(f"{cat}!E3")
+            pyautogui.press("enter")
+            pyautogui.hotkey("ctrl", "shift", "down")
+            pyautogui.press("f2")
+            pyautogui.press("Enter")
+            time.sleep(2)
+            pyautogui.hotkey("ctrl", "d")
+            time.sleep(3)
+
+        QMessageBox.information(self, "Finished!", "Finished Cleaning all categories!")
+        self.__set_info("All done!", Status.DONE)
+
 
     def import_data(self):
         """Import data from previous workbook to current active workbook"""

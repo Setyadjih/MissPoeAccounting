@@ -116,6 +116,7 @@ def init_catsheet(file, categories: dict):
             update_cat_avg(excel_item, input_wb)
             done_set.add(item)
     input_wb.save(file)
+    input_wb.close()
     logger.info("All done with init")
 
 
