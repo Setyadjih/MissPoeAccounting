@@ -193,7 +193,6 @@ class PembelianWidget(QWidget):
         QMessageBox.information(self, "Finished!", "Finished Cleaning all categories!")
         self.__set_info("All done!", Status.DONE)
 
-
     def import_data(self):
         """Import data from previous workbook to current active workbook"""
         new_workbook = self.ui.xls_file_browser.text()
