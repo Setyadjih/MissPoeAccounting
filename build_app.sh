@@ -1,2 +1,8 @@
+# Freeze application to exe
 pyinstaller app.spec
-tar -a -c -f 'dist/Poe Excel Automator v%1.zip' 'dist/Poe Excel Automator v%1.exe'
+
+# Get version, awk to split text on quotes
+ver=$(grep "VER" ./core/constants.py | awk -F'"' '{print $2}')
+
+# Zip Executable
+tar -a -c -f "dist/Poe Excel Automator $ver.zip" "dist/Poe Excel Automator $ver.exe"
