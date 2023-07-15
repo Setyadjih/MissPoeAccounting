@@ -140,9 +140,10 @@ class PembelianWidget(QWidget):
 
     def safe_gui(self, title, func, *args):
         if pyautogui.getActiveWindowTitle() != title:
-            self.logger.debug(f"Active Window: {pyautogui.getActiveWindowTitle()}")
+            self.logger.debug(f"Active Window: {pyautogui.getActiveWindowTitle()} does not match {title}")
             raise AssertionError(f"Bad Active Window: {pyautogui.getActiveWindowTitle()} != {title}")
         func(*args)
+        time.sleep(1)
 
     def init_cat_button(self):
         """Start initialization of category sheets"""
@@ -179,32 +180,34 @@ class PembelianWidget(QWidget):
             self.__set_info("Canceled auto cleaning.")
             return
 
-        self.__set_info("Start cleaning!")
-        self.logger.info("Start cleaning!")
-        self.logger.debug(f"finding window with title: {file.title().split('/')[-1]} - Excel")
-        pyautogui.getWindowsWithTitle("Pembelian")[0].activate()
-        title = pyautogui.getActiveWindowTitle()
-
-        # Hacky as hell gui automation to fix excel formulas
-        for cat in self.categories["CATEGORIES"]:
-            try:
-                self.logger.info(f"Cleaning {cat} Max!")
-                self.safe_gui(title, pyautogui.press, "f5")
-                self.safe_gui("Go To", pyautogui.write, f"{cat}!E3")
-                self.safe_gui("Go To", pyautogui.press, "enter")
-                self.safe_gui(title, pyautogui.hotkey, "ctrl", "shift", "down")
-                self.safe_gui(title, pyautogui.press, "f2")
-                self.safe_gui(title, pyautogui.press, "enter")
-                time.sleep(2)
-                self.safe_gui(title, pyautogui.hotkey, "ctrl", "d")
-                time.sleep(3)
-            except AssertionError:
-                QMessageBox.information(self, "Safety Cancel",
-                                        "Excel is no longer the active window! Exiting just in case.")
-                self.__set_info("Cleaning safety cancel triggered")
-
-                return
-        QMessageBox.information(self, "Finished!", "Finished Cleaning all categories!")
+        # self.__set_info("Start cleaning!")
+        # self.logger.info("Start cleaning!")
+        # self.logger.debug(f"finding window with title: {file.title().split('/')[-1]} - Excel")
+        # pyautogui.getWindowsWithTitle(f"{file.title().split('/')[-1]} - Excel")[0].activate()
+        # time.sleep(1)
+        # title = pyautogui.getActiveWindowTitle()
+        #
+        # # Hacky as hell gui automation to fix excel formulas
+        # for cat in self.categories["CATEGORIES"]:
+        #     try:
+        #         self.logger.info(f"Cleaning {cat} Max!")
+        #         self.safe_gui(title, pyautogui.press, "f5")
+        #         self.safe_gui("Go To", pyautogui.write, f"{cat}!E3")
+        #         self.safe_gui("Go To", pyautogui.press, "enter")
+        #         pyautogui.hotkey("ctrl", "shift", "end", interval=0.5)
+        #         time.sleep(1)
+        #         self.safe_gui(title, pyautogui.press, "f2")
+        #         self.safe_gui(title, pyautogui.press, "enter")
+        #         time.sleep(2)
+        #         self.safe_gui(title, pyautogui.hotkey, "ctrl", "d")
+        #         time.sleep(3)
+        #     except AssertionError:
+        #         QMessageBox.information(self, "Safety Cancel",
+        #                                 "Excel is no longer the active window! Exiting just in case.")
+        #         self.__set_info("Cleaning safety cancel triggered")
+        #
+        #         return
+        # QMessageBox.information(self, "Finished!", "Finished Cleaning all categories!")
         self.__set_info("All done!", Status.DONE)
 
     def import_data(self):
