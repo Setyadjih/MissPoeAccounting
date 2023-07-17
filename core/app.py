@@ -115,8 +115,9 @@ class PembelianWidget(QWidget):
         """Lock item units to preexisting data"""
         if not self.ui.new_item_check.isChecked():
             item: ExcelItem = self.ui.item_combo.currentData()
-
-            if item.unit_isi != "NA":
+            if not item:
+                return
+            if item.unit_isi:
                 self.ui.isi_unit_combo.setCurrentText(item.unit_isi)
                 self.ui.isi_unit_combo.setDisabled(True)
             else:
@@ -173,12 +174,12 @@ class PembelianWidget(QWidget):
             return
         self.logger.info("Finished init")
         self.__set_info("All done!", Status.DONE)
-        subprocess.run(["start", "excel", file], shell=True)
-        time.sleep(2)
-        result = QMessageBox.information(self, "Loading File..", "Please Hit OK when file is loaded, then do not touch anything")
-        if result != QMessageBox.Ok:
-            self.__set_info("Canceled auto cleaning.")
-            return
+        # subprocess.run(["start", "excel", file], shell=True)
+        # time.sleep(2)
+        # result = QMessageBox.information(self, "Loading File..", "Please Hit OK when file is loaded, then do not touch anything")
+        # if result != QMessageBox.Ok:
+        #     self.__set_info("Canceled auto cleaning.")
+        #     return
 
         # self.__set_info("Start cleaning!")
         # self.logger.info("Start cleaning!")
