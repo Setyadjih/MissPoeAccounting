@@ -267,10 +267,14 @@ class PembelianWidget(QWidget):
             cat_items = []
             try:
                 for row in purchase_book[category].iter_rows(min_row=3, values_only=True):
-                    name = row[0].strip()
+                    if not row[0]:
+                        continue
+                    name = row[0]
                     # In case of missing item names or empty rows, skip
                     if not name:
                         continue
+
+                    name = name.strip()
 
                     # Guard against missing units
                     unit_beli = row[1] if row[1] else "NA"
