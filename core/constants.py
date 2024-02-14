@@ -2,7 +2,7 @@ from datetime import date
 from dataclasses import dataclass
 from enum import Enum
 
-APP_VERSION = "v1.4.8"
+APP_VERSION = "v2.0.0"
 DATE = date.today().strftime("%d-%b-%y")
 LOGGER_NAME = "automator.log"
 
